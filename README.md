@@ -10,7 +10,6 @@ The following students contributed to this project:
 2. Selena Huang 
 3. Erica Moreira 
 4. Jacob Rosenthal 
-5. Laura Levin-Gleba
 
 ## Data Set Information 
 The dataset represents 10 years (1999-2008) of clinical care at 130 US hospitals and integrated delivery networks. It includes over 50 features representing patient and hospital outcomes. Information was extracted from the database for encounters that satisfied the following criteria.
