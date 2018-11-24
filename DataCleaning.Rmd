@@ -1,0 +1,350 @@
+---
+title: "DataCleaning"
+output: html_document
+---
+ 
+```{r, message = FALSE}
+library(dplyr)
+library(tidyverse)
+library(foreign)
+```
+
+Cleaning to do list:
+- remove encounter id (there is only one encounter per patient)
+- add unknown for missing race
+- race -> make dummy variables (1 hot encoding, so create columns for each race and 1 and 0)
+- gender -> change to 0,1,2
+- age -> 1 hot encoding for each category (so column for each category)
+- remove weight (too many missing)
+- admission type (selena will come up with grouping)
+- disch disposition (selena will come up with grouping and see how many people actually died - should we exclude or mask death?)
+- admission source (selena will come up with grouping)
+- time in hospital keep as is (continuous variable)
+- remove payer code
+- remove medical specialty
+- number lab procedures (keep as is)
+- number procedures( keep as is)
+- number of medications (keep as is)
+- sum number of outpatient, emergency and inpatient into "healthcare utilization" column
+- create icd mapping based on table 2 in paper that came with data (Jacob will work on this)
+- number of diagnoses (keep as is)
+- A1C change to abnormal (>7 and >8) , normal, and none
+- Meds : keep insulin column as is
+- The rest of meds (sum of # of other meds on)
+- Change column (keep as is)
+- drop diabetes med
+- readmitted keep 
+
+
+```{r}
+## Reading in data
+setwd("/Users/ericamoreira/Desktop/Erica_Files/Classes/BST260/BST260FinalProject")
+d <- read.csv("diabetic_data.csv", header = TRUE)
+```
+
+```{r}
+## Cleaning data
+
+# Filtering out patients who expired 
+# (I confirmed that none of the patients who expired were listed as readmitted)
+d <- filter(d, !(discharge_disposition_id %in% c(11, 19, 20, 21)))
+
+# One-Hot Encoding Race
+d$race_unknown <- ifelse(d$race == "?", 1, 0)
+d$race_cauc <- ifelse(d$race == "Caucasian", 1, 0)
+d$race_afam <- ifelse(d$race == "AfricanAmerican", 1, 0)
+d$race_oth <- ifelse(d$race == "Other", 1, 0)
+d$race_asian <- ifelse(d$race == "Asian", 1, 0)
+d$race_hisp <- ifelse(d$race == "Hispanic", 1, 0)
+
+# Encoding gender as 0 = male, 1 = female, 2 = Unknown/Invalid
+d$gender <- ifelse(d$gender == "Male", 0, 
+                   ifelse(d$gender == "Female", 1, 
+                          ifelse(d$gender == "Unknown/Invalid", 2, "NULL")))
+d$gender <- as.integer(d$gender)
+
+# One-Hot Encoding Age (all ages are up to but not including upper limit age, same as original data)
+d$age_0to10 <- ifelse(d$age == "[0-10)", 1, 0)
+d$age_10to20 <- ifelse(d$age == "[10-20)", 1, 0)
+d$age_20to30 <- ifelse(d$age == "[20-30)", 1, 0)
+d$age_30to40 <- ifelse(d$age == "[30-40)", 1, 0)
+d$age_40to50 <- ifelse(d$age == "[40-50)", 1, 0)
+d$age_50to60 <- ifelse(d$age == "[50-60)", 1, 0)
+d$age_60to70 <- ifelse(d$age == "[60-70)", 1, 0)
+d$age_70to80 <- ifelse(d$age == "[70-80)", 1, 0)
+d$age_80to90 <- ifelse(d$age == "[80-90)", 1, 0)
+d$age_90to100 <- ifelse(d$age == "[90-100)", 1, 0)
+
+# set up dummy variables for admission types
+d <- mutate(d, at_emergent = as.numeric(admission_type_id %in% c(1, 2, 7)), 
+              at_elective = as.numeric(admission_type_id == 3), 
+              at_other = as.numeric(admission_type_id %in% c(4, 5, 6, 8)))
+
+# Set up dummy variables for discharge dispositions
+d <- mutate(d, dd_home = as.numeric(discharge_disposition_id %in% c(1, 6, 8)), 
+              dd_facility_transfer = as.numeric(discharge_disposition_id %in% c(2, 3, 4, 5, 10, 16, 17, 22, 23, 24, 30, 27, 28, 29)), 
+              dd_other = as.numeric(discharge_disposition_id %in% c(7, 18, 25, 26)), 
+              dd_admitted = as.numeric(discharge_disposition_id %in% c(9, 12, 15)),
+              # add_expired = as.numeric(discharge_disposition_id %in% c(11, 19, 20, 21)), (dropped patients who expired)
+              dd_hospice = as.numeric(discharge_disposition_id %in% c(13, 14)))
+
+# Set up dummy variables for admission source
+d <- mutate(d, as_outpatient = as.numeric(admission_source_id %in% c(1, 2, 3)),
+              as_facility_transfer = as.numeric(admission_source_id %in% c(4, 5, 6, 10, 18, 19, 22, 25, 26)),
+              as_ed = as.numeric(admission_source_id %in% c(7)),
+              as_other = as.numeric(admission_source_id %in% c(8, 9, 15, 17, 20, 21)),
+              as_newborn = as.numeric(admission_source_id %in% c(11, 12, 13, 14, 23, 24)))
+
+# Sum of number of outpatient, emergency and inpatient encounters 
+d$healthcare_utilization <- (d$number_outpatient + d$number_emergency + d$number_inpatient)
+
+# Code to group ICD codes according to Table 2 in (Strack et al. 2014)
+# 0 = ?
+# 1 = external
+# 2 = circulatory
+# 3 = diabetes
+# 4 = respiratory
+# 5 = digestive
+# 6 = injury
+# 7 = musculoskeletal
+# 8 = genitourinary
+# 9 = neoplasm
+# 10 = other
+# 11 = endocrine_nutrition_metabolic
+# 12 = skin
+# 13 = infectious
+# 14 = mental
+# 15 = blood
+# 16 = nervous
+# 17 = pregnancy
+# 18 = sense
+# 19 = congenital
+
+d$diag_1 <- as.character(d$diag_1)
+d$diag_2 <- as.character(d$diag_2)
+d$diag_3 <- as.character(d$diag_3)
+
+d$diag_1grp <- ifelse (d$diag_1 == "?", 0, 
+          ifelse(grepl(d$diag_1, pattern = "[EV]") == T, 1, 
+            ifelse(floor(as.numeric(d$diag_1)) == 250, 2, 
+              ifelse(d$diag_1 %in% c(390:459, 785), 3, 
+                ifelse(d$diag_1 %in% c(460:519, 786), 4, 
+                  ifelse(d$diag_1 %in% c(520:579, 787), 5, 
+                    ifelse(d$diag_1 %in% c(800:999), 6, 
+                      ifelse(d$diag_1 %in% c(710:739), 7,
+                        ifelse(d$diag_1 %in% c(580:629, 788), 8, 
+                         ifelse(d$diag_1 %in% c(140:239), 9, 
+                           ifelse(d$diag_1 %in% c(780, 781, 784, 790:799), 10,
+                             ifelse(d$diag_1 %in% c(240:249, 251:279), 11,  
+                               ifelse(d$diag_1 %in% c(680:709, 782), 12, 
+                                 ifelse(d$diag_1 %in% c(001:139), 13,
+                                   ifelse(d$diag_1 %in% c(290:319), 14, 
+                                     ifelse(d$diag_1 %in% c(280:289), 15,
+                                       ifelse(d$diag_1 %in% c(320:359), 16,
+                                         ifelse(d$diag_1 %in% c(630:679), 17, 
+                                          ifelse(d$diag_1 %in% c(360:389), 18, 
+                                            ifelse(d$diag_1 %in% c(740:759), 19, "NULL")
+                                )))))))))))))))))))
+
+d$diag_2grp <- ifelse (d$diag_2 == "?", 0, 
+          ifelse(grepl(d$diag_2, pattern = "[EV]") == T, 1, 
+            ifelse(floor(as.numeric(d$diag_2)) == 250, 2, 
+              ifelse(d$diag_2 %in% c(390:459, 785), 3, 
+                ifelse(d$diag_2 %in% c(460:519, 786), 4, 
+                  ifelse(d$diag_2 %in% c(520:579, 787), 5, 
+                    ifelse(d$diag_2 %in% c(800:999), 6, 
+                      ifelse(d$diag_2 %in% c(710:739), 7,
+                        ifelse(d$diag_2 %in% c(580:629, 788), 8, 
+                         ifelse(d$diag_2 %in% c(140:239), 9, 
+                           ifelse(d$diag_2 %in% c(780, 781, 784, 790:799), 10,
+                             ifelse(d$diag_2 %in% c(240:249, 251:279), 11,  
+                               ifelse(d$diag_2 %in% c(680:709, 782), 12, 
+                                 ifelse(d$diag_2 %in% c(001:139), 13,
+                                   ifelse(d$diag_2 %in% c(290:319), 14, 
+                                     ifelse(d$diag_2 %in% c(280:289), 15,
+                                       ifelse(d$diag_2 %in% c(320:359), 16,
+                                         ifelse(d$diag_2 %in% c(630:679), 17, 
+                                          ifelse(d$diag_2 %in% c(360:389), 18, 
+                                            ifelse(d$diag_2 %in% c(740:759), 19, "NULL")
+                                )))))))))))))))))))
+
+d$diag_3grp <- ifelse (d$diag_3 == "?", 0, 
+          ifelse(grepl(d$diag_3, pattern = "[EV]") == T, 1, 
+            ifelse(floor(as.numeric(d$diag_3)) == 250, 2, 
+              ifelse(d$diag_3 %in% c(390:459, 785), 3, 
+                ifelse(d$diag_3 %in% c(460:519, 786), 4, 
+                  ifelse(d$diag_3 %in% c(520:579, 787), 5, 
+                    ifelse(d$diag_3 %in% c(800:999), 6, 
+                      ifelse(d$diag_3 %in% c(710:739), 7,
+                        ifelse(d$diag_3 %in% c(580:629, 788), 8, 
+                         ifelse(d$diag_3 %in% c(140:239), 9, 
+                           ifelse(d$diag_3 %in% c(780, 781, 784, 790:799), 10,
+                             ifelse(d$diag_3 %in% c(240:249, 251:279), 11,  
+                               ifelse(d$diag_3 %in% c(680:709, 782), 12, 
+                                 ifelse(d$diag_3 %in% c(001:139), 13,
+                                   ifelse(d$diag_3 %in% c(290:319), 14, 
+                                     ifelse(d$diag_3 %in% c(280:289), 15,
+                                       ifelse(d$diag_3 %in% c(320:359), 16,
+                                         ifelse(d$diag_3 %in% c(630:679), 17, 
+                                          ifelse(d$diag_3 %in% c(360:389), 18, 
+                                            ifelse(d$diag_3 %in% c(740:759), 19, "NULL")
+                                )))))))))))))))))))
+
+d$diag_1grp <- as.integer(d$diag_1grp)
+d$diag_2grp <- as.integer(d$diag_2grp)
+d$diag_3grp <- as.integer(d$diag_3grp)
+
+
+# A1C change to abnormal (>7 and >8) = 2 , normal = 1, and none = 0
+d$A1Cresult <- ifelse(d$A1Cresult == "None", 0, 
+                         ifelse(d$A1Cresult == "Norm", 1, 
+                                ifelse(d$A1Cresult %in% c(">7", ">8"), 2, "NULL")))
+
+# Changing insulin to numeric
+# 0 = No
+# 1 = Down
+# 2 = Steady
+# 3 = Up
+d$insulin <- ifelse(d$insulin == "No",0, ifelse(d$insulin == "Down", 1, ifelse(d$insulin == "Steady", 2, 3)))
+
+# Creating sum of other meds on column
+# (not all of these columns have all four options, but it was easier to code this way - gives same result)
+d$metformin <- ifelse(d$metformin %in% c("Up", "Steady", "Down"),1,0)
+d$repaglinide <- ifelse(d$repaglinide %in% c("Up", "Steady", "Down"),1,0)
+d$nateglinide <- ifelse(d$nateglinide %in% c("Up", "Steady", "Down"),1,0)
+d$chlorpropamide <- ifelse(d$chlorpropamide %in% c("Up", "Steady", "Down"),1,0)
+d$glimepiride <- ifelse(d$glimepiride %in% c("Up", "Steady", "Down"),1,0)
+d$acetohexamide <- ifelse(d$acetohexamide %in% c("Up", "Steady", "Down"),1,0)
+d$glipizide <- ifelse(d$glipizide %in% c("Up", "Steady", "Down"),1,0)
+d$glyburide <- ifelse(d$glyburide %in% c("Up", "Steady", "Down"),1,0)
+d$tolbutamide <- ifelse(d$tolbutamide %in% c("Up", "Steady", "Down"),1,0)
+d$pioglitazone <- ifelse(d$pioglitazone %in% c("Up", "Steady", "Down"),1,0)
+d$rosiglitazone <- ifelse(d$rosiglitazone %in% c("Up", "Steady", "Down"),1,0)
+d$acarbose <- ifelse(d$acarbose %in% c("Up", "Steady", "Down"),1,0)
+d$miglitol <- ifelse(d$miglitol %in% c("Up", "Steady", "Down"),1,0)
+d$troglitazone <- ifelse(d$troglitazone %in% c("Up", "Steady", "Down"),1,0)
+d$tolazamide <- ifelse(d$tolazamide %in% c("Up", "Steady", "Down"),1,0)
+d$examide <- ifelse(d$examide %in% c("Up", "Steady", "Down"),1,0)
+d$citoglipton <- ifelse(d$citoglipton %in% c("Up", "Steady", "Down"),1,0)
+d$glyburide.metformin <- ifelse(d$glyburide.metformin %in% c("Up", "Steady", "Down"),1,0)
+d$glipizide.metformin <- ifelse(d$glipizide.metformin %in% c("Up", "Steady", "Down"),1,0)
+d$glimepiride.pioglitazone <- ifelse(d$glimepiride.pioglitazone %in% c("Up", "Steady", "Down"),1,0)
+d$metformin.rosiglitazone <- ifelse(d$metformin.rosiglitazone %in% c("Up", "Steady", "Down"),1,0)
+d$metformin.pioglitazone <- ifelse(d$metformin.pioglitazone %in% c("Up", "Steady", "Down"),1,0)
+
+d$num_other_diabetes_meds_up_stdy_dwn <- (d$metformin + d$repaglinide + d$nateglinide + d$chlorpropamide + d$glimepiride + d$acetohexamide + d$glipizide + d$glyburide + d$tolbutamide + d$pioglitazone + d$rosiglitazone + d$acarbose + d$miglitol + d$troglitazone + d$tolazamide + d$examide + d$citoglipton + d$glyburide.metformin + d$glipizide.metformin + d$glimepiride.pioglitazone + d$metformin.rosiglitazone + d$metformin.pioglitazone)
+
+# changing change to numeric
+# 0 = No
+# 1 = Ch
+d$change <- ifelse(d$change == "Ch", 1, 0)
+
+# changing readmitted to numeric
+# 0 = No
+# 1 = >30
+# 2 = <30 (in order of most concerning level of readmission)
+
+d$readmitted <- ifelse(d$readmitted == "No", 0, ifelse(d$readmitted == ">30", 1, 2))
+```
+
+```{r}
+## Selecting columns for final dataset
+
+d <- d %>% select(
+             # encounter_id (only one per patient, so this is unneccessary)
+             patient_nbr, 
+             #race, (converted into one hot encoding) 
+             race_unknown,
+             race_cauc,
+             race_afam,
+             race_asian,
+             race_hisp,
+             race_oth,
+             gender, # (converted into 0 = male, 1 = female, 2 = Unknown/Invalid)
+             # age, (converted into one hot encoding)
+             age_0to10,
+             age_10to20,
+             age_20to30,
+             age_30to40,
+             age_40to50,
+             age_50to60,
+             age_60to70,
+             age_70to80,
+             age_80to90,
+             age_90to100,
+             # weight (too many nulls)
+             # admission_type_id, (Selena converted into groups)
+             at_emergent,
+             at_elective,
+             at_other,
+             #discharge_disposition_id, (Selena converted into groups)
+             dd_home,
+             dd_facility_transfer,
+             dd_other,
+             dd_admitted,
+             # dd_expired, (filtered out these patients)
+             dd_hospice,
+             #admission_source_id, (Selena converted into groups)
+             as_outpatient,
+             as_facility_transfer,
+             as_ed,
+             as_other,
+             as_newborn,
+             time_in_hospital, 
+             # payor_code (not necessary)
+             # medical_specialty (not necessary)
+             num_lab_procedures,
+             num_procedures,
+             num_medications,
+             # number_outpatient, (summed into healthcare.utilization)
+             # number_emergency, (summed into healthcare.utilization)
+             # number_inpatient, (summed into healthcare.utilization)
+             healthcare_utilization,
+             # diag_1, (Jacob created grouper)
+             # diag_2, (Jacob created grouper)
+             # diag_3, (Jacob created grouper)
+             diag_1grp, # (see above for mapping)
+             diag_2grp, # (see above for mapping)
+             diag_3grp, # (see above for mapping)
+             number_diagnoses,
+             # max_glu_serum,
+             A1Cresult, # (converted into none = 0, normal = 1, abnormal (>7 and >8) = 2)
+             insulin, # (see above for mapping)
+             # metformin,
+             # repaglinide,
+             # nateglinide,
+             # chlorpropamide,
+             # glimepiride,
+             # acetohexamide,
+             # glipizide,
+             # glyburide,
+             # tolbutamide,
+             # pioglitazone,
+             # rosiglitazone,
+             # acarbose,
+             # miglitol,
+             # troglitazone,
+             # tolazamide,
+             # examide,
+             # citoglipton,
+             # glyburide.metformin,
+             # glipizide.metformin,
+             # glimepiride.pioglitazone,
+             # metformin.rosiglitazone,
+             # metformin.pioglitazone,
+             num_other_diabetes_meds_up_stdy_dwn, # (num of above commented out meds that pt was taking up/steady/down)
+             change, # (converted into 0 = No 1 = Ch)
+             # diabetes_med 
+             readmitted # (see above for mapping)
+             )
+```
+
+```{r}
+# write data to csv file
+# write.csv(d, file = "CleanData.csv")
+```
+
+
+
+
+
