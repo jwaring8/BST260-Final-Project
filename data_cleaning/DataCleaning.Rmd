@@ -285,30 +285,33 @@ d$diag_3grp <- as.factor(d$diag_3grp)
 d <- one_hot(data.table(d))
 d <- as.data.frame(d) # convert back to data.frame format
 
-d <- d %>% mutate(diag_grp_Unknown = diag_1grp_Unknown + diag_1grp_NULL, 
-                  diag_grp_External = diag_1grp_External + diag_2grp_External + diag_3grp_External, 
-                  diag_grp_Circulatory = diag_1grp_Circulatory + diag_2grp_Circulatory + diag_3grp_Circulatory,
-                  diag_grp_Diabetes = diag_1grp_Diabetes + diag_2grp_Diabetes + diag_3grp_Diabetes, 
-                  diag_grp_Respiratory = diag_1grp_Respiratory + diag_2grp_Respiratory + diag_3grp_Respiratory, 
-                  diag_grp_Digestive = diag_1grp_Digestive + diag_2grp_Digestive + diag_3grp_Digestive, 
-                  diag_grp_Injury = diag_1grp_Injury + diag_2grp_Injury + diag_3grp_Injury, 
-                  diag_grp_Musculoskeletal = diag_1grp_Musculoskeletal + diag_2grp_Musculoskeletal + diag_3grp_Musculoskeletal, 
-                  diag_grp_Genitourinary = diag_1grp_Genitourinary + diag_2grp_Genitourinary + diag_3grp_Genitourinary, 
-                  diag_grp_Neoplasm = diag_1grp_Neoplasm + diag_2grp_Neoplasm + diag_3grp_Neoplasm, 
-                  diag_grp_Other = diag_1grp_Other + diag_2grp_Other + diag_3grp_Other, 
-                  diag_grp_Endocrine_Nutrition_Metabolic = diag_1grp_Endocrine_Nutrition_Metabolic + 
-                    diag_2grp_Endocrine_Nutrition_Metabolic + diag_3grp_Endocrine_Nutrition_Metabolic, 
-                  diag_grp_Skin = diag_1grp_Skin + diag_2grp_Skin + diag_3grp_Skin, 
-                  diag_grp_Infectious = diag_1grp_Infectious + diag_2grp_Infectious + diag_3grp_Infectious, 
-                  diag_grp_Mental = diag_1grp_Mental + diag_2grp_Mental + diag_3grp_Mental, 
-                  diag_grp_Blood = diag_1grp_Blood + diag_2grp_Blood, diag_3grp_Blood, 
-                  diag_grp_Nervous = diag_1grp_Nervous + diag_2grp_Nervous + diag_3grp_Nervous, 
-                  diag_grp_Pregnancy = diag_1grp_Pregnancy + diag_2grp_Pregnancy + diag_3grp_Pregnancy, 
-                  diag_grp_Sense = diag_1grp_Sense + diag_2grp_Sense + diag_3grp_Sense, 
-                  diag_grp_Congenital = diag_1grp_Congenital + diag_2grp_Congenital + diag_3grp_Congenital)
+d <- d %>% mutate(diag_1grp_Unknown = diag_1grp_Unknown + diag_1grp_NULL, 
+                  diag_2grp_Unknown = diag_2grp_Unknown + diag_3grp_Unknown + diag_2grp_NULL + diag_3grp_NULL, 
+                  diag_2grp_External = diag_2grp_External + diag_3grp_External, 
+                  diag_2grp_Circulatory = diag_2grp_Circulatory + diag_3grp_Circulatory,
+                  diag_2grp_Diabetes = diag_2grp_Diabetes + diag_3grp_Diabetes, 
+                  diag_2grp_Respiratory = diag_2grp_Respiratory + diag_3grp_Respiratory, 
+                  diag_2grp_Digestive = diag_2grp_Digestive + diag_3grp_Digestive, 
+                  diag_2grp_Injury = diag_2grp_Injury + diag_3grp_Injury, 
+                  diag_2grp_Musculoskeletal = diag_2grp_Musculoskeletal + diag_3grp_Musculoskeletal, 
+                  diag_2grp_Genitourinary = diag_2grp_Genitourinary + diag_3grp_Genitourinary, 
+                  diag_2grp_Neoplasm = diag_2grp_Neoplasm + diag_3grp_Neoplasm, 
+                  diag_2grp_Other = diag_2grp_Other + diag_3grp_Other, 
+                  diag_2grp_Endocrine_Nutrition_Metabolic =  diag_2grp_Endocrine_Nutrition_Metabolic + 
+                    diag_3grp_Endocrine_Nutrition_Metabolic, 
+                  diag_2grp_Skin = diag_2grp_Skin + diag_3grp_Skin, 
+                  diag_2grp_Infectious = diag_2grp_Infectious + diag_3grp_Infectious, 
+                  diag_2grp_Mental = diag_2grp_Mental + diag_3grp_Mental, 
+                  diag_2grp_Blood = diag_2grp_Blood, diag_3grp_Blood, 
+                  diag_2grp_Nervous = diag_2grp_Nervous + diag_3grp_Nervous, 
+                  diag_2grp_Pregnancy = diag_2grp_Pregnancy + diag_3grp_Pregnancy, 
+                  diag_2grp_Sense = diag_2grp_Sense + diag_3grp_Sense, 
+                  diag_2grp_Congenital = diag_2grp_Congenital + diag_3grp_Congenital)
 
-d <- d %>% select(-starts_with("diag_1"))
-d <- d %>% select(-starts_with("diag_2"))
+d <- within(d, rm(diag_1))
+d <- within(d, rm(diag_1grp_NULL))
+d <- within(d, rm(diag_2))
+d <- within(d, rm(diag_2grp_NULL))
 d <- d %>% select(-starts_with("diag_3"))
 ```
 
