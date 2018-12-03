@@ -25,6 +25,15 @@ We need to first drop any patients who's discharge status is listed as "expired"
 d <- filter(d, !(discharge_disposition_id %in% c(11, 19, 20, 21)))
 ```
 
+### Filter out Patients who have a gender of Unknown/Invalid (3 subjects)
+```{r}
+d <- d %>% filter(gender != "Unknown/Invalid")
+
+# dropping the unused level "Unknown/Invalid"
+d$gender <- droplevels(d$gender)
+```
+
+
 ### Drop Columns 
 
 Next, we will drop some of the columns for various reasons: 
@@ -186,18 +195,18 @@ d <- mutate(d, at_emergent = as.numeric(admission_type_id %in% c(1, 2, 7)),
 
 # Set up dummy variables for discharge dispositions
 d <- mutate(d, dd_home = as.numeric(discharge_disposition_id %in% c(1, 6, 8)), 
-              dd_facility_transfer = as.numeric(discharge_disposition_id %in% c(2, 3, 4, 5, 10, 16, 17, 22, 23, 24, 30, 27, 28, 29)), 
-              dd_other = as.numeric(discharge_disposition_id %in% c(7, 18, 25, 26)), 
-              dd_admitted = as.numeric(discharge_disposition_id %in% c(9, 12, 15)),
+              dd_facility_transfer = as.numeric(discharge_disposition_id %in% c(2, 3, 4, 5, 10, 16, 17, 22, 23, 24, 30, 27, 28, 29, 13, 14)), 
+              dd_other = as.numeric(discharge_disposition_id %in% c(7, 18, 25, 26, 9, 12, 15))) 
+              # dd_admitted = as.numeric(discharge_disposition_id %in% c(9, 12, 15)), #lumping admitted into other
               # add_expired = as.numeric(discharge_disposition_id %in% c(11, 19, 20, 21)), (dropped patients who expired)
-              dd_hospice = as.numeric(discharge_disposition_id %in% c(13, 14)))
+              # dd_hospice = as.numeric(discharge_disposition_id %in% c(13, 14))) #lumping hospice into transfer
 
 # Set up dummy variables for admission source
 d <- mutate(d, as_outpatient = as.numeric(admission_source_id %in% c(1, 2, 3)),
               as_facility_transfer = as.numeric(admission_source_id %in% c(4, 5, 6, 10, 18, 19, 22, 25, 26)),
               as_ed = as.numeric(admission_source_id %in% c(7)),
-              as_other = as.numeric(admission_source_id %in% c(8, 9, 15, 17, 20, 21)),
-              as_newborn = as.numeric(admission_source_id %in% c(11, 12, 13, 14, 23, 24)))
+              as_other = as.numeric(admission_source_id %in% c(8, 9, 15, 17, 20, 21, 11, 12, 13, 14, 23, 24)))
+              #as_newborn = as.numeric(admission_source_id %in% c(11, 12, 13, 14, 23, 24)))#as_newborn added to as_other
 
 d <- within(d, rm(admission_type_id))
 d <- within(d, rm(discharge_disposition_id))
@@ -221,7 +230,7 @@ d$diag_1grp <- ifelse (d$diag_1 == "?", "Unknown",
                       ifelse(d$diag_1 %in% c(710:739), "Musculoskeletal",
                         ifelse(d$diag_1 %in% c(580:629, 788), "Genitourinary", 
                          ifelse(d$diag_1 %in% c(140:239), "Neoplasm", 
-                           ifelse(d$diag_1 %in% c(780, 781, 784, 790:799), "Other",
+                           ifelse(d$diag_1 %in% c(780, 781, 784, 790:799, 740:759), "Other", # added congenital to other
                              ifelse(d$diag_1 %in% c(240:249, 251:279), "Endocrine_Nutrition_Metabolic",  
                                ifelse(d$diag_1 %in% c(680:709, 782), "Skin", 
                                  ifelse(d$diag_1 %in% c(001:139), "Infectious",
@@ -229,9 +238,9 @@ d$diag_1grp <- ifelse (d$diag_1 == "?", "Unknown",
                                      ifelse(d$diag_1 %in% c(280:289), "Blood",
                                        ifelse(d$diag_1 %in% c(320:359), "Nervous",
                                          ifelse(d$diag_1 %in% c(630:679), "Pregnancy", 
-                                          ifelse(d$diag_1 %in% c(360:389), "Sense", 
-                                            ifelse(d$diag_1 %in% c(740:759), "Congenital", "NULL")
-                                )))))))))))))))))))
+                                          ifelse(d$diag_1 %in% c(360:389), "Sense", "NULL") 
+                                            #ifelse(d$diag_1 %in% c(740:759), "Congenital", "NULL")
+                                ))))))))))))))))))
 
 d$diag_2grp <- ifelse (d$diag_2 == "?", "Unknown", 
           ifelse(grepl(d$diag_2, pattern = "[EV]") == T, "External", 
@@ -243,7 +252,7 @@ d$diag_2grp <- ifelse (d$diag_2 == "?", "Unknown",
                       ifelse(d$diag_2 %in% c(710:739), "Musculoskeletal",
                         ifelse(d$diag_2 %in% c(580:629, 788), "Genitourinary", 
                          ifelse(d$diag_2 %in% c(140:239), "Neoplasm", 
-                           ifelse(d$diag_2 %in% c(780, 781, 784, 790:799), "Other",
+                           ifelse(d$diag_2 %in% c(780, 781, 784, 790:799, 740:759), "Other", # added congenital to other
                              ifelse(d$diag_2 %in% c(240:249, 251:279), "Endocrine_Nutrition_Metabolic",  
                                ifelse(d$diag_2 %in% c(680:709, 782), "Skin", 
                                  ifelse(d$diag_2 %in% c(001:139), "Infectious",
@@ -251,9 +260,9 @@ d$diag_2grp <- ifelse (d$diag_2 == "?", "Unknown",
                                      ifelse(d$diag_2 %in% c(280:289), "Blood",
                                        ifelse(d$diag_2 %in% c(320:359), "Nervous",
                                          ifelse(d$diag_2 %in% c(630:679), "Pregnancy", 
-                                          ifelse(d$diag_2 %in% c(360:389), "Sense", 
-                                            ifelse(d$diag_2 %in% c(740:759), "Congenital", "NULL")
-                                )))))))))))))))))))
+                                          ifelse(d$diag_2 %in% c(360:389), "Sense", "NULL") 
+                                            #ifelse(d$diag_2 %in% c(740:759), "Congenital", "NULL")
+                                ))))))))))))))))))
 
 d$diag_3grp <- ifelse (d$diag_3 == "?", "Unknown", 
           ifelse(grepl(d$diag_3, pattern = "[EV]") == T, "External", 
@@ -265,7 +274,7 @@ d$diag_3grp <- ifelse (d$diag_3 == "?", "Unknown",
                       ifelse(d$diag_3 %in% c(710:739), "Musculoskeletal",
                         ifelse(d$diag_3 %in% c(580:629, 788), "Genitourinary", 
                          ifelse(d$diag_3%in% c(140:239), "Neoplasm", 
-                           ifelse(d$diag_3 %in% c(780, 781, 784, 790:799), "Other",
+                           ifelse(d$diag_3 %in% c(780, 781, 784, 790:799, 740:759), "Other", # added congenital to other
                              ifelse(d$diag_3 %in% c(240:249, 251:279), "Endocrine_Nutrition_Metabolic",  
                                ifelse(d$diag_3 %in% c(680:709, 782), "Skin", 
                                  ifelse(d$diag_3 %in% c(001:139), "Infectious",
@@ -273,9 +282,9 @@ d$diag_3grp <- ifelse (d$diag_3 == "?", "Unknown",
                                      ifelse(d$diag_3 %in% c(280:289), "Blood",
                                        ifelse(d$diag_3 %in% c(320:359), "Nervous",
                                          ifelse(d$diag_3 %in% c(630:679), "Pregnancy", 
-                                          ifelse(d$diag_3 %in% c(360:389), "Sense", 
-                                            ifelse(d$diag_3 %in% c(740:759), "Congenital", "NULL")
-                                )))))))))))))))))))
+                                          ifelse(d$diag_3 %in% c(360:389), "Sense", "NULL") 
+                                           # ifelse(d$diag_3 %in% c(740:759), "Congenital", "NULL")
+                                ))))))))))))))))))
 
 
 d$diag_1grp <- as.factor(d$diag_1grp)
@@ -305,8 +314,8 @@ d <- d %>% mutate(diag_1grp_Unknown = diag_1grp_Unknown + diag_1grp_NULL,
                   diag_2grp_Blood = diag_2grp_Blood, diag_3grp_Blood, 
                   diag_2grp_Nervous = diag_2grp_Nervous + diag_3grp_Nervous, 
                   diag_2grp_Pregnancy = diag_2grp_Pregnancy + diag_3grp_Pregnancy, 
-                  diag_2grp_Sense = diag_2grp_Sense + diag_3grp_Sense, 
-                  diag_2grp_Congenital = diag_2grp_Congenital + diag_3grp_Congenital)
+                  diag_2grp_Sense = diag_2grp_Sense + diag_3grp_Sense) 
+                  # diag_2grp_Congenital = diag_2grp_Congenital + diag_3grp_Congenital) #congenital grouped into otuher
 
 d <- within(d, rm(diag_1))
 d <- within(d, rm(diag_1grp_NULL))
@@ -314,6 +323,9 @@ d <- within(d, rm(diag_2))
 d <- within(d, rm(diag_2grp_NULL))
 d <- d %>% select(-starts_with("diag_3"))
 ```
+
+
+
 
 ```{r}
 # write data to csv file
