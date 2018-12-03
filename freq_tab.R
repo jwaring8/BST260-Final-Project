@@ -1,4 +1,6 @@
 library(tableone)
+library(tidyverse)
+dat <- read_csv("./dataset/clean_diabetic_data.csv")
 
 dput(names(dat))
 
