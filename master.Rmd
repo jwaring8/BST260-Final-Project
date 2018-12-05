@@ -1,0 +1,253 @@
+---
+title: "Predicting Hospital Readmission"
+output: html_document
+---
+
+The dataset we will be working with represents 10 years (1999-2008) of clinical care at 130 US hospitals and integrated delivery networks. It includes over 50 features representing patient and hospital outcomes. Information was extracted from the database for encounters that satisfied the following criteria.
+
+1. It is an inpatient encounter (a hospital admission).
+2. It is a diabetic encounter, that is, one during which any kind of diabetes was entered to the system as a diagnosis.
+3. The length of stay was at least 1 day and at most 14 days.
+4. Laboratory tests were performed during the encounter.
+5. Medications were administered during the encounter.
+
+The data contains such attributes as patient number, race, gender, age, admission type, time in hospital, medical specialty of admitting physician, number of lab test performed, HbA1c test result, diagnosis, number of medication, diabetic medications, number of outpatient, inpatient, and emergency visits in the year before the hospitalization, etc.
+
+The dataset is avaliable from the [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Diabetes+130-US+hospitals+for+years+1999-2008). 
+
+The project is a 2-way classification task in which we try to predict if a patient will either
+
+1. Not be readmitted
+2. Readmitted in <30 days
+
+```{r, echo = FALSE, message = FALSE}
+# import all necessary libraries 
+library(tidyverse)
+library(caret)
+library(skimr)
+```
+
+### Read in the dataset 
+```{r}
+# Reading in data
+data <- read.csv("dataset/diabetic_data.csv")
+
+# summary of the data 
+str(data)
+```
+
+### Data Preparation and Preprocessing
+
+Before moving on to do some data cleaning, let’s observe the descriptive statistics of each column in the training dataset.
+
+The `skimr` package provides a nice solution to show key descriptive stats for each column.
+
+```{r}
+data[data == "?"] <- NA
+skimmed <- skim_to_wide(data)
+knitr::kable(skimmed[, c(1:3, 5:6, 9:10, 16)])
+```
+
+Now, we will drop some of the columns for various reasons: 
+- Encounter ID: an uneccessary column that provides no information for readmission 
+- Patient Number: an unecessary column that provides no information for readmission
+- Weight: While potentially useful, there is too many missing values 
+- Payer Code: too many missing values 
+- Medical Specialty: probably unecessary and too many missing values 
+- Diabetes Medication: redundant information 
+- diag_1, diag_2, and diag_3: ICD codes are hard to deal with and often lack predictive power
+
+```{r}
+drops <- c("encounter_id", "patient_nbr", "weight", "payer_code", 
+           "medical_specialty", "diabetesMed", "diag_1", "diag_2", "diag_3")
+data <- data[ , !(names(data) %in% drops)]
+```
+
+Next, we need to drop any patients who's discharge status is listed as "expired". If a patient has died, there is no chance of readmission. 
+```{r}
+data <- filter(data, !(discharge_disposition_id %in% c(11, 19, 20, 21)))
+```
+
+We will also remove the 3 subjects with an unknon gender. 
+```{r}
+data <- data %>% filter(gender != "Unknown/Invalid")
+data$gender <- droplevels(data$gender)
+```
+
+
+##### Data Encodings 
+
+- Gender will be encoded as 0 for Female, 1 for Male
+```{r}
+data$gender <- as.integer(data$gender) - 1
+```
+
+- Age is given as 10 year intervals. We will split this interval into the median age of the interval.
+```{r}
+# Encoding ages
+data$age <- ifelse(data$age == "[0-10)", 5, 
+                  ifelse(data$age == "[10-20)", 15, 
+                         ifelse(data$age == "[20-30)", 25, 
+                                ifelse(data$age == "[30-40)", 35, 
+                                       ifelse(data$age == "[40-50)", 45, 
+                                              ifelse(data$age == "[50-60)", 55, 
+                                                     ifelse(data$age == "[60-70)", 65, 
+                                                            ifelse(data$age == "[70-80)", 75, 
+                                                                   ifelse(data$age == "[80-90)", 85, 95)))))))))
+                                                                    
+```
+
+- Glucose Serum will be encoded as follows: 
+    - 0 for No measurment
+    - 1 for Normal reading 
+    - 2 for >200 & >300 (abnormal readings)
+```{r}
+data$max_glu_serum <- ifelse(data$max_glu_serum == "None", 0, 
+                          ifelse(data$max_glu_serum == "Norm", 1, 2))
+```
+
+- A1C test results will be encoded as follows: 
+    - 0 for No measurement 
+    - 1 for Normal reading 
+    - 2 for an abnormal reading (>7 or >8)
+```{r}
+data$A1Cresult <- ifelse(data$A1Cresult == "None", 0, 
+                         ifelse(data$A1Cresult == "Norm", 1, 
+                                ifelse(data$A1Cresult %in% c(">7", ">8"), 2, "NULL")))
+```
+
+- Changes in insulin doage will be encoded as follows:
+    - 0 for no insulin
+    - 1 for decrease in insulin
+    - 2 for steady insulin
+    - 3 for increase in insulin
+```{r}
+data$insulin <- ifelse(data$insulin == "No", 0, ifelse(data$insulin == "Down", 1, ifelse(data$insulin == "Steady", 2, 3)))
+```
+
+- Change in Medincations will be encoded as follows:
+    - 0 for no change in medication
+    - 1 for change in medication
+```{r}
+data$change <- ifelse(data$change == "Ch", 1, 0)
+```
+
+- Race will be encoded as follows: 
+    - 0 for Caucasian
+    - 1 for African American 
+    - 2 for Other
+```{r}
+data$race <- ifelse(data$race == "Caucasian", 0, ifelse(data$race == "AfricanAmerican", 1, 2))
+```
+
+- Readmitted Status will be encoded as follows: 
+    - 0 for No Readmission within 30 days
+    - 1 for a Readmission in <30 days 
+```{r}
+data$readmitted <- ifelse((data$readmitted == "NO" | data$readmitted == ">30"), 0, 1)
+data %>% group_by(readmitted) %>% summarize(count=n())
+```
+
+##### New Features 
+
+- Healthcare Utilization is calculated as the sum of number of outpatient, emergency, and inpatient encouters the patient has had in the past year
+```{r}
+# Sum of number of outpatient, emergency and inpatient encounters 
+data$healthcare_utilization <- (data$number_outpatient + data$number_emergency + data$number_inpatient)
+```
+
+- Sum on non-insulin diabetes medications 
+```{r}
+# Creating sum of other meds on column
+# (not all of these columns have all four options, but it was easier to code this way - gives same result)
+data$metformin <- ifelse(data$metformin %in% c("Up", "Steady", "Down"),1,0)
+data$repaglinide <- ifelse(data$repaglinide %in% c("Up", "Steady", "Down"),1,0)
+data$nateglinide <- ifelse(data$nateglinide %in% c("Up", "Steady", "Down"),1,0)
+data$chlorpropamide <- ifelse(data$chlorpropamide %in% c("Up", "Steady", "Down"),1,0)
+data$glimepiride <- ifelse(data$glimepiride %in% c("Up", "Steady", "Down"),1,0)
+data$acetohexamide <- ifelse(data$acetohexamide %in% c("Up", "Steady", "Down"),1,0)
+data$glipizide <- ifelse(data$glipizide %in% c("Up", "Steady", "Down"),1,0)
+data$glyburide <- ifelse(data$glyburide %in% c("Up", "Steady", "Down"),1,0)
+data$tolbutamide <- ifelse(data$tolbutamide %in% c("Up", "Steady", "Down"),1,0)
+data$pioglitazone <- ifelse(data$pioglitazone %in% c("Up", "Steady", "Down"),1,0)
+data$rosiglitazone <- ifelse(data$rosiglitazone %in% c("Up", "Steady", "Down"),1,0)
+data$acarbose <- ifelse(data$acarbose %in% c("Up", "Steady", "Down"),1,0)
+data$miglitol <- ifelse(data$miglitol %in% c("Up", "Steady", "Down"),1,0)
+data$troglitazone <- ifelse(data$troglitazone %in% c("Up", "Steady", "Down"),1,0)
+data$tolazamide <- ifelse(data$tolazamide %in% c("Up", "Steady", "Down"),1,0)
+data$examide <- ifelse(data$examide %in% c("Up", "Steady", "Down"),1,0)
+data$citoglipton <- ifelse(data$citoglipton %in% c("Up", "Steady", "Down"),1,0)
+data$glyburide.metformin <- ifelse(data$glyburide.metformin %in% c("Up", "Steady", "Down"),1,0)
+data$glipizide.metformin <- ifelse(data$glipizide.metformin %in% c("Up", "Steady", "Down"),1,0)
+data$glimepiride.pioglitazone <- ifelse(data$glimepiride.pioglitazone %in% c("Up", "Steady", "Down"),1,0)
+data$metformin.rosiglitazone <- ifelse(data$metformin.rosiglitazone %in% c("Up", "Steady", "Down"),1,0)
+data$metformin.pioglitazone <- ifelse(data$metformin.pioglitazone %in% c("Up", "Steady", "Down"),1,0)
+
+data$num_other_diabetes_meds_up_stdy_dwn <- (data$metformin + data$repaglinide + data$nateglinide + data$chlorpropamide + data$glimepiride + data$acetohexamide + data$glipizide + data$glyburide + data$tolbutamide + data$pioglitazone + data$rosiglitazone + data$acarbose + data$miglitol + data$troglitazone + data$tolazamide + data$examide + data$citoglipton + data$glyburide.metformin + data$glipizide.metformin + data$glimepiride.pioglitazone + data$metformin.rosiglitazone + data$metformin.pioglitazone)
+
+
+drops2 <- c("metformin", "repaglinide", "nateglinide", "chlorpropamide", "glimepiride", "acetohexamide", "glipizide", 
+            "glyburide", "tolbutamide", "pioglitazone", "rosiglitazone", "acarbose", "miglitol", "troglitazone", 
+            "tolazamide", "examide", "citoglipton", "glyburide.metformin", "glipizide.metformin", "glimepiride.pioglitazone",
+            "metformin.rosiglitazone", "metformin.pioglitazone")
+
+data <- data[ , !(names(data) %in% drops2)]
+```
+
+##### One Hot Encodings 
+
+- Admission types, discharge dispositions, admission source will be grouped and one hot encoded
+```{r}
+# set up dummy variables for admission types
+data <- mutate(data, at_emergent = as.numeric(admission_type_id %in% c(1, 2, 7)), 
+              at_elective = as.numeric(admission_type_id == 3), 
+              at_other = as.numeric(admission_type_id %in% c(4, 5, 6, 8)))
+
+# Set up dummy variables for discharge dispositions
+data <- mutate(data, dd_home = as.numeric(discharge_disposition_id %in% c(1, 6, 8)), 
+              dd_facility_transfer = as.numeric(discharge_disposition_id %in% c(2, 3, 4, 5, 10, 16, 17, 22, 23, 24, 30, 27, 28, 29, 13, 14)), 
+              dd_other = as.numeric(discharge_disposition_id %in% c(7, 18, 25, 26, 9, 12, 15))) 
+              # dd_admitted = as.numeric(discharge_disposition_id %in% c(9, 12, 15)), #lumping admitted into other
+              # add_expired = as.numeric(discharge_disposition_id %in% c(11, 19, 20, 21)), (dropped patients who expired)
+              # dd_hospice = as.numeric(discharge_disposition_id %in% c(13, 14))) #lumping hospice into transfer
+
+# Set up dummy variables for admission source
+data <- mutate(data, as_outpatient = as.numeric(admission_source_id %in% c(1, 2, 3)),
+              as_facility_transfer = as.numeric(admission_source_id %in% c(4, 5, 6, 10, 18, 19, 22, 25, 26)),
+              as_ed = as.numeric(admission_source_id %in% c(7)),
+              as_other = as.numeric(admission_source_id %in% c(8, 9, 15, 17, 20, 21, 11, 12, 13, 14, 23, 24)))
+              #as_newborn = as.numeric(admission_source_id %in% c(11, 12, 13, 14, 23, 24)))#as_newborn added to as_other
+
+data <- within(data, rm(admission_type_id))
+data <- within(data, rm(discharge_disposition_id))
+data <- within(data, rm(admission_source_id))
+```
+
+
+### Train Test Split 
+
+The dataset is now ready, and we will split it into training(80%) and test(20%) datasets using caret’s `createDataPartition` function.
+
+```{r}
+# write cleaned dataset
+data <- data %>% select(-readmitted, readmitted) # move readmitted to the last column value
+write.csv(data, file = "dataset/clean_diabetic_data.csv", row.names = F)
+
+# Create the training and test datasets
+set.seed(123)
+
+# Step 1: Get row numbers for the training data (80% train split, 20% testing split)
+trainRowNumbers <- createDataPartition(data$readmitted, p=0.8, list=FALSE)
+
+# Step 2: Create the training  dataset
+trainData <- data[trainRowNumbers,]
+
+# Step 3: Create the test dataset
+testData <- data[-trainRowNumbers,]
+
+# Step 4: Save the datasets 
+write.csv(trainData, file = "dataset/trainData.csv", row.names = F)
+write.csv(testData, file = "dataset/testData.csv", row.names = F)
+```
+
+
