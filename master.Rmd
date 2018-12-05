@@ -451,3 +451,32 @@ ggplot(data=data, aes(x=factor(readmitted,
   labs(y="# of Diabetes Medications Changed", x="Readmission Status", 
        title="Distribution of # of Diabetes Medications Changed Grouped by Readmission Status", fill="Readmission Status")
 ```
+
+### Training and Tuning ML Models 
+
+I think we should attempt to use `caret` for any and all machine learning models. It appears to have quite a few avaliable. 
+
+```{r}
+# See available algorithms in caret
+modelnames <- paste(names(getModelInfo()), collapse=',  ')
+modelnames
+```
+
+#### Random Forest
+
+First, let's train a random forest model on our training data, and then use the model to predict on the test set. 
+
+```{r, cache=TRUE}
+# train the model using randomForest
+rf_model <- train(as.factor(readmitted) ~ ., data=trainData, method='parRF', tuneLength=1, trControl = trainControl(method="none"))
+```
+
+```{r, cache=TRUE}
+# predict on the testData
+predicted <- predict(rf_model, testData)
+
+# Compute the confusion matrix
+confusionMatrix(reference = as.factor(testData$readmitted), data = as.factor(predicted), mode='everything', positive='1')
+```
+
+
