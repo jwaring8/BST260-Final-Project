@@ -25,6 +25,8 @@ The project is a 2-way classification task in which we try to predict if a patie
 library(tidyverse)
 library(caret)
 library(skimr)
+library(data.table)
+library(mltools)
 theme_set(theme_bw())
 ```
 
@@ -56,11 +58,11 @@ Now, we will drop some of the columns for various reasons:
 - Payer Code: too many missing values 
 - Medical Specialty: probably unecessary and too many missing values 
 - Diabetes Medication: redundant information 
-- diag_1, diag_2, and diag_3: ICD codes are hard to deal with and often lack predictive power
+- diag_2 and diag_3: ICD codes are hard to deal with and often lack predictive power
 
 ```{r}
 drops <- c("encounter_id", "patient_nbr", "weight", "payer_code", 
-           "medical_specialty", "diabetesMed", "diag_1", "diag_2", "diag_3")
+           "medical_specialty", "diabetesMed", "diag_2", "diag_3")
 data <- data[ , !(names(data) %in% drops)]
 ```
 
@@ -225,6 +227,42 @@ data <- within(data, rm(discharge_disposition_id))
 data <- within(data, rm(admission_source_id))
 ```
 
+- ICD codes have over 700 different "levels" in our dataframe. We will group these ICD codes into 20 different categories based on the [Strack et al. 2014 paper](https://www.hindawi.com/journals/bmri/2014/781670/). We will then one hot encode these categories for each patient. 
+
+```{r}
+data$diag_1 <- as.character(data$diag_1)
+
+data$diag_1grp <- ifelse (data$diag_1 == "?", "Unknown", 
+          ifelse(grepl(data$diag_1, pattern = "[EV]") == T, "External", 
+            ifelse(floor(as.numeric(data$diag_1)) == 250, "Circulatory", 
+              ifelse(data$diag_1 %in% c(390:459, 785), "Diabetes", 
+                ifelse(data$diag_1 %in% c(460:519, 786), "Respiratory", 
+                  ifelse(data$diag_1 %in% c(520:579, 787), "Digestive", 
+                    ifelse(data$diag_1 %in% c(800:999), "Injury", 
+                      ifelse(data$diag_1 %in% c(710:739), "Musculoskeletal",
+                        ifelse(data$diag_1 %in% c(580:629, 788), "Genitourinary", 
+                         ifelse(data$diag_1 %in% c(140:239), "Neoplasm", 
+                           ifelse(data$diag_1 %in% c(780, 781, 784, 790:799, 740:759), "Other", # added congenital to other
+                             ifelse(data$diag_1 %in% c(240:249, 251:279), "Endocrine_Nutrition_Metabolic",  
+                               ifelse(data$diag_1 %in% c(680:709, 782), "Skin", 
+                                 ifelse(data$diag_1 %in% c(001:139), "Infectious",
+                                   ifelse(data$diag_1 %in% c(290:319), "Mental", 
+                                     ifelse(data$diag_1 %in% c(280:289), "Blood",
+                                       ifelse(data$diag_1 %in% c(320:359), "Nervous",
+                                         ifelse(data$diag_1 %in% c(630:679), "Pregnancy", 
+                                          ifelse(data$diag_1 %in% c(360:389), "Sense", "Unknown") 
+                                            #ifelse(data$diag_1 %in% c(740:759), "Congenital", "NULL")
+                                ))))))))))))))))))
+
+
+data$diag_1grp <- as.factor(data$diag_1grp)
+
+data <- one_hot(data.table(data))
+data <- as.data.frame(data) # convert back to data.frame format
+
+data <- within(data, rm(diag_1))
+data <- na.omit(data)
+```
 
 ### Train Test Split 
 
@@ -468,15 +506,25 @@ First, let's train a random forest model on our training data, and then use the 
 
 ```{r, cache=TRUE}
 # train the model using randomForest
-rf_model <- train(as.factor(readmitted) ~ ., data=trainData, method='parRF', tuneLength=1, trControl = trainControl(method="none"))
+control <- trainControl(method = "cv", number = 5, classProbs = TRUE, summaryFunction = twoClassSummary)
+rf_model <- train(factor(readmitted, labels = c("NO", "YES")) ~ ., data=trainData, method='rf', 
+                  tuneLength=3, metric = "ROC", trControl = control)
 ```
 
-```{r, cache=TRUE}
+What about variable importance?
+```{r}
+varimp_rf <- varImp(rf_model)
+plot(varimp_rf, main="Variable Importance with Random Forest")
+```
+
+
+```{r}
 # predict on the testData
 predicted <- predict(rf_model, testData)
 
 # Compute the confusion matrix
-confusionMatrix(reference = as.factor(testData$readmitted), data = as.factor(predicted), mode='everything', positive='1')
+confusionMatrix(reference = factor(testData$readmitted, labels = c("NO", "YES")), 
+                data = as.factor(predicted), mode='everything', positive='YES')
 ```
 
 

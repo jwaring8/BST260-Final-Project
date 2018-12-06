@@ -1,4 +1,10 @@
 base
+methods
+datasets
+utils
+grDevices
+graphics
+stats
 tidyverse
 ggplot2
 tibble
@@ -11,4 +17,6 @@ forcats
 lattice
 caret
 skimr
+data.table
+mltools
 bindrcpp
