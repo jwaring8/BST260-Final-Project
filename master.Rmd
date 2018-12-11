@@ -548,7 +548,7 @@ if(file.exists("xgb_params.csv")) {
    
   for (i in 1:nrow(param_grid)) {
     print(i)
-    xgb_cv <- xgb.cv(params = param_grid[i, ], data = dtrain, nrounds = 300, 
+    xgb_cv <- xgb.cv(params = param_grid[i, ], data = dtrain, nrounds = 150, 
                      nfold = 10, early_stopping_rounds = 5, verbose = F)
     if(xgb_cv$evaluation_log[nrow(xgb_cv$evaluation_log), test_auc_mean] > best_test_auc) {
       best_test_auc = xgb_cv$evaluation_log[nrow(xgb_cv$evaluation_log), test_auc_mean] 
@@ -564,9 +564,9 @@ if(file.exists("xgb_params.csv")) {
 
 ```{r}
 xgb <- xgb.train(params = best_params, data = dtrain, nrounds = 500)
-pred_xgb <- predict(xgb, dtest)
-pred_xgb <- as.numeric(pred_xgb > 0.5)
-confusionMatrix(reference = as.factor(testData$readmitted), data = as.factor(pred_xgb), mode = "everything", positive="1")
+xgbPredict <- predict(xgb, dtest)
+xgbPredict <- as.numeric(xgbPredict> 0.5)
+confusionMatrix(reference = as.factor(testData$readmitted), data = as.factor(xgbPredict), mode = "everything", positive="1")
 ```
 
 #### Variable Importance According to XGBoost
@@ -581,10 +581,39 @@ xgb.ggplot.importance(importance_matrix = importance, top_n = 10)
 ROC is a probability curve and AUC represents degree or measure of separability. It tells how much model is capable of distinguishing between classes. Higher the AUC, better the model is at predicting 0s as 0s and 1s as 1s. You can read more about it [here](https://towardsdatascience.com/understanding-auc-roc-curve-68b2303cc9c5). 
 
 ```{r}
-pred <- prediction(pred_xgb, testData$readmitted)
+pred <- prediction(xgbPredict, testData$readmitted)
 AUC <- performance(pred, "auc")@y.values[[1]]
 perf_ROC=performance(pred,"tpr","fpr") #plot the actual ROC curve
 plot(perf_ROC, main="ROC plot")
 text(0.9, 0.0,paste("AUC = ",format(AUC, digits=3, scientific=FALSE)))
 ```
+
+### KNN
+
+```{r}
+ctrl <- trainControl(method="cv", number = 5)
+knn <- train(as.factor(readmitted) ~ ., data = trainData_SMOTE, method = "knn", metric = "kappa",
+             trControl = ctrl, preProcess = c("center","scale"), tuneLength = 10)
+knn
+```
+
+```{r}
+plot(knn)
+```
+
+```{r}
+knnPredict <- predict(knn, testData)
+confusionMatrix(reference = as.factor(testData$readmitted), data = as.factor(knnPredict), mode = "everything", positive="1")
+```
+
+```{r}
+knnPred <- prediction(as.numeric(knnPredict), testData$readmitted)
+knn_AUC <- performance(knnPred, "auc")@y.values[[1]]
+knn_perf_ROC=performance(knnPred,"tpr","fpr") #plot the actual ROC curve
+plot(knn_perf_ROC, main="ROC plot")
+text(0.9, 0.0,paste("AUC = ",format(knn_AUC, digits=3, scientific=FALSE)))
+```
+
+
+
 
