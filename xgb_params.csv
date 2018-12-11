@@ -1,2 +1,2 @@
 "objective","eval_metric","eta","max_depth","gamma","scale_pos_weight"
-"binary:logistic","auc",0.1,6,3,3
+"binary:logistic","auc",0.1,6,4,3

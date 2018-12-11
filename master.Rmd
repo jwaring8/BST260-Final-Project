@@ -39,6 +39,9 @@ theme_set(theme_bw())
 # Reading in data
 data <- read.csv("dataset/diabetic_data.csv")
 
+# remove duplicates
+data <- data[!duplicated(data$patient_nbr), ]
+
 # summary of the data 
 str(data)
 ```
@@ -268,17 +271,17 @@ data <- within(data, rm(diag_1))
 data <- na.omit(data)
 ```
 
-```{r, fig.width=20}
+```{r, fig.height=15}
 data <- data %>% select(-readmitted, readmitted) # move readmitted to the last column value
 cor_mat <- cor(data[, 1:46])
 corrplot(cor_mat, type = "upper", order = "hclust", 
          tl.col = "black", tl.srt = 45)
 ```
 
-```{r, fig.width=20}
+```{r, fig.height=15}
 cor_mat[!lower.tri(cor_mat)] <- 0
-data <- data[,!apply(cor_mat,2,function(x) any(abs(x) > 0.5))]
-cor_mat2 <- cor(data[, 1:37])
+data <- data[,!apply(cor_mat,2,function(x) any(abs(x) > 0.6))]
+cor_mat2 <- cor(data[, 1:41])
 corrplot(cor_mat2, type = "upper", order = "hclust", 
          tl.col = "black", tl.srt = 45)
 ```
@@ -506,8 +509,13 @@ ggplot(data=data, aes(x=factor(readmitted,
 "SMOTE is an oversampling method which creates new instances of the minority class by forming convex combinations of neighboring instances.  It effectively draws lines between minority points in the feature space, and samples along these lines. This allows us to balance our data-set without as much overfitting, as we create new synthetic examples rather than using duplicates. This however does not prevent all overfitting, as these are still created from existing data points." (https://towardsdatascience.com/dealing-with-imbalanced-classes-in-machine-learning-d43d6fa19d2)
 
 ```{r}
-trainData$readmitted <- as.factor(trainData$readmitted)
-trainData_SMOTE <- SMOTE(readmitted ~ ., trainData)
+if(file.exists("dataset/trainSMOTE.csv")) {
+  trainData_SMOTE <- read.csv("dataset/trainSMOTE.csv")
+} else {
+  trainData$readmitted <- as.factor(trainData$readmitted)
+  trainData_SMOTE <- SMOTE(readmitted ~ ., trainData) 
+  write.csv(trainData_SMOTE, "dataset/trainSMOTE.csv", row.names = F)
+}
 ```
 
 ### XGBoost
@@ -516,8 +524,8 @@ XGBoost stands for e**X**treme **G**radient **B**oosting. You can read more abou
 
 ```{r}
 # create XGB Boost dense matrix objects --> faster performance 
-dtrain <- xgb.DMatrix(data = as.matrix(trainData_SMOTE[, 1:37]), label = as.numeric(trainData_SMOTE$readmitted) - 1)
-dtest <- xgb.DMatrix(data = as.matrix(testData[, 1:37]), label = as.numeric(testData$readmitted) - 1)
+dtrain <- xgb.DMatrix(data = as.matrix(trainData_SMOTE[, 1:41]), label = as.numeric(trainData_SMOTE$readmitted))
+dtest <- xgb.DMatrix(data = as.matrix(testData[, 1:41]), label = as.numeric(testData$readmitted))
 ```
 
 #### Hyperparameter optimization 
@@ -533,12 +541,13 @@ if(file.exists("xgb_params.csv")) {
                           eta = c(0.1, 0.3, 0.5), 
                           max_depth = c(2,4,6),
                           gamma = c(2,3,4), 
-                          scale_pos_weight = c(1.5, 2, 3))
+                          scale_pos_weight = c(2, 3))
 
   best_test_auc <- 0
   best_params <- param_grid[1, ]
    
   for (i in 1:nrow(param_grid)) {
+    print(i)
     xgb_cv <- xgb.cv(params = param_grid[i, ], data = dtrain, nrounds = 300, 
                      nfold = 10, early_stopping_rounds = 5, verbose = F)
     if(xgb_cv$evaluation_log[nrow(xgb_cv$evaluation_log), test_auc_mean] > best_test_auc) {
@@ -554,7 +563,7 @@ if(file.exists("xgb_params.csv")) {
 #### Training the Model
 
 ```{r}
-xgb <- xgb.train(params = best_params, data = dtrain, nrounds = 200, verbose = 0)
+xgb <- xgb.train(params = best_params, data = dtrain, nrounds = 500)
 pred_xgb <- predict(xgb, dtest)
 pred_xgb <- as.numeric(pred_xgb > 0.5)
 confusionMatrix(reference = as.factor(testData$readmitted), data = as.factor(pred_xgb), mode = "everything", positive="1")
