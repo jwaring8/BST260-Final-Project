@@ -1,7 +1,12 @@
 ---
 title: "Predicting Hospital Readmission"
+date: "Due December 16, 2018"
 output: html_document
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache = TRUE)
+```
 
 The dataset we will be working with represents 10 years (1999-2008) of clinical care at 130 US hospitals and integrated delivery networks. It includes over 50 features representing patient and hospital outcomes. Information was extracted from the database for encounters that satisfied the following criteria.
 
@@ -272,21 +277,42 @@ data <- within(data, rm(diag_1))
 data <- na.omit(data)
 ```
 
-```{r, fig.height=15}
+```{r, fig.height=15, eval=F, echo=F}
 data <- data %>% select(-readmitted, readmitted) # move readmitted to the last column value
 cor_mat <- cor(data[, 1:46])
+plot.new()
 corrplot(cor_mat, type = "upper", order = "hclust", 
-         tl.col = "black", tl.srt = 45)
+         tl.col = "black", tl.srt = 45,mar=c(1,1,1,1))
 ```
 
-```{r, fig.height=15}
+```{r correlation matrix, fig.width=8, fig.height=10}
+data <- data %>% select(-readmitted, readmitted) # move readmitted to the last column value
+cor_mat <- cor(data[, 1:46])
 cor_mat[!lower.tri(cor_mat)] <- 0
 data <- data[,!apply(cor_mat,2,function(x) any(abs(x) > 0.6))]
-cor_mat2 <- cor(data[, 1:41])
-corrplot(cor_mat2, type = "upper", order = "hclust", 
-         tl.col = "black", tl.srt = 45)
-```
 
+cor_mat2 <- cor(data[, 1:41])
+
+get_lower_tri<-function(cormat){
+    cormat[upper.tri(cormat)] <- NA
+    return(cormat)
+}
+
+cor_mat_melted <- melt(get_lower_tri(cor_mat2), na.rm = T)
+
+ggplot(data = cor_mat_melted, aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab") +
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+        legend.position = c(0,1), legend.justification = c(0,1),
+        axis.title = element_blank(), plot.title = element_text(hjust = 0.5)) +
+  labs(title = "Correlation matrix") +
+  scale_y_discrete(position = "right")
+  
+#corrplot(cor_mat2, type = "upper", order = "hclust", tl.col = "black", tl.srt = 45)
+```
 
 ### Train Test Split 
 
@@ -318,7 +344,6 @@ write.csv(testData, file = "dataset/testData.csv", row.names = F)
 ## PCA and t-SNE
 
 ```{r PCA_and_tSNE}
-
 pca_tsne_df <- data[,c(1:41)]
 # scale variables
 for(i in 1:ncol(pca_tsne_df)){
@@ -668,7 +693,5 @@ knn_perf_ROC=performance(knnPred,"tpr","fpr") #plot the actual ROC curve
 plot(knn_perf_ROC, main="ROC plot")
 text(0.9, 0.0,paste("AUC = ",format(knn_AUC, digits=3, scientific=FALSE)))
 ```
-
-
 
 
