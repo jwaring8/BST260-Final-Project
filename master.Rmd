@@ -31,6 +31,7 @@ library(mltools)
 library(corrplot)
 library(ROCR)
 library(DMwR)
+library(Rtsne)
 theme_set(theme_bw())
 ```
 
@@ -313,6 +314,60 @@ write.csv(testData, file = "dataset/testData.csv", row.names = F)
 ```
 
 ### Exploratory Data Analysis
+
+## PCA and t-SNE
+
+```{r PCA_and_tSNE}
+
+pca_tsne_df <- data[,c(1:41)]
+# scale variables
+for(i in 1:ncol(pca_tsne_df)){
+  pca_tsne_df[[i]] <- ((pca_tsne_df[[i]] - mean(pca_tsne_df[[i]])) / sd(pca_tsne_df[[i]]))
+}
+
+pca_tsne_df <- t(pca_tsne_df)
+
+#PCA
+
+PC <- prcomp(pca_tsne_df)
+
+var_explained <- data.frame("PC" = c(1:41), "eigenvalue" = (PC$sdev)^2)
+var_explained$var_explained <- var_explained$eigenvalue / sum(var_explained$eigenvalue)
+var_explained$cumulative <- cumsum(var_explained$var_explained) / sum(var_explained$var_explained)
+
+ggplot(var_explained, aes(x = PC, y = var_explained)) + 
+  geom_line() +
+  labs(title = "Elbow plot: proportion of variance explained by each PC")
+
+ggplot(var_explained, aes(x = PC, y = cumulative)) + 
+  geom_line() +
+  labs(title = "Cumulative variance explained by PC_1 through PC_n",
+       x = "n", y = "vat_explained")
+
+outdf <- cbind(data, PC$rotation)
+outdf$readmitted <- as.factor(outdf$readmitted)
+
+ggplot(outdf, aes(x = PC1, y = PC2)) +
+  geom_point(aes(color = readmitted), alpha = 0.5) +
+  scale_color_manual(values = c("cadetblue3", "blue")) +
+  labs(title = "Classes are not well-separated by principal components")
+
+# TSNE
+tsne_model_1 = Rtsne(t(as.matrix(pca_tsne_df)), check_duplicates=FALSE, pca=TRUE,perplexity = 10, theta=0.5, dims=2)
+
+## getting the two dimension matrix
+d_tsne_1 = as.data.frame(tsne_model_1$Y) 
+
+d_tsne_1$readmitted <- as.factor(data$readmitted)
+
+## plotting the results without clustering
+ggplot(d_tsne_1, aes(x=V1, y=V2)) +  
+  geom_point(aes(color = readmitted)) +
+  scale_color_manual(values = c("cadetblue3", "blue")) +
+  labs(title = "Classes are not well-separated by t-SNE")
+```
+
+We do not see separation of readmitted classes by PCA or t-SNE analysis.
 
 ## Composition Graphs 
 ```{r}
