@@ -4,13 +4,10 @@ library(VGAM)
 library(caret)
 library(glmnet)
 
-dat <- read_csv("./dataset/trainData.csv")
-dat <- dat %>% mutate(readmitted = as.factor(readmitted))
-
-# Create new training set and test set w/in training set 
-trainRowNumbers <- createDataPartition(dat$readmitted, p=0.8, list=FALSE)
-trainData <- dat[trainRowNumbers,]
-testData <- dat[-trainRowNumbers,]
+trainData <- read.csv("./dataset/trainSMOTE.csv")
+trainData <- trainData %>% mutate(readmitted = as.factor(readmitted))
+testData <- read.csv("./dataset/testData.csv")
+testData <- testData %>% mutate(readmitted = as.factor(readmitted))
 
 # set up 10-fold partition
 cv_splits <- createFolds(dat$readmitted, k = 10, returnTrain = TRUE)
