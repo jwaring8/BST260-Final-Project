@@ -35,8 +35,10 @@ library(data.table)
 library(mltools)
 library(corrplot)
 library(ROCR)
+library(pROC)
 library(DMwR)
 library(Rtsne)
+library(glmnet)
 theme_set(theme_bw())
 ```
 
@@ -694,4 +696,72 @@ plot(knn_perf_ROC, main="ROC plot")
 text(0.9, 0.0,paste("AUC = ",format(knn_AUC, digits=3, scientific=FALSE)))
 ```
 
+### GLMnet
+
+GLMnet fits a generalized linear model via penalized maximum likelihood. The algorithm implemented in the package computes the regularization path for the elastic-net penalty over a grid of values for the regularization parameter λ (https://web.stanford.edu/~hastie/glmnet/glmnet_alpha.html#log). To reduce noise caused by data-splitting, we used 10-fold cross-validation for tuning parameter values using the caret package as described here (http://www.milanor.net/blog/cross-validation-for-predictive-analytics-using-r/).
+
+#### Reading in the training and test dataset
+
+The training dataset is the train_SMOTE dataset generated above.
+
+```{r}
+trainData <- read.csv("./dataset/trainSMOTE.csv")
+trainData <- trainData %>% mutate(readmitted = as.factor(readmitted))
+testData <- read.csv("./dataset/testData.csv")
+testData <- testData %>% mutate(readmitted = as.factor(readmitted))
+```
+
+#### Set up 10-fold data partition
+
+```{r}
+cv_splits <- createFolds(trainData$readmitted, k = 10, returnTrain = TRUE)
+str(cv_splits)
+```
+
+#### Fit glmnet using elastic-net penalty using a range of alpha and lambdas
+
+```{r}
+glmnet_grid <- expand.grid(alpha = c(0,  .1,  .2, .4, .6, .8, 1),
+                           lambda = seq(.01, .2, length = 20))
+glmnet_ctrl <- trainControl(method = "cv", number = 10)
+
+glmnet_fit <- train(readmitted ~ ., data = trainData,
+                    method = "glmnet",
+                    family = "binomial",
+                    preProcess = c("center", "scale"),
+                    tuneGrid = glmnet_grid,
+                    trControl = glmnet_ctrl)
+
+# Best tuning parameters
+glmnet_fit$bestTune
+```
+
+#### Plot acuracy against tuning parameters
+
+```{r}
+trellis.par.set(caretTheme())
+plot(glmnet_fit, scales = list(x = list(log = 2)))
+```
+
+#### Predict outcome using the test set
+
+```{r}
+pred_classes <- predict(glmnet_fit, newdata = testData, type = "raw")
+confusionMatrix(data = as.factor(pred_classes), reference = as.factor(testData$readmitted))
+```
+
+#### ROC curves
+
+```{r}
+auc <- roc(testData$readmitted, as.numeric(pred_classes))
+ggroc(auc) + ggtitle("ROC curve of GLMnet with 10-fold validation")
+print(auc$auc)
+```
+
+#### Model coefficients as selected by GLMnet
+
+```{r}
+plot(varImp(glmnet_fit,scale=F))
+coef(glmnet_fit$finalModel, s = glmnet_fit$bestTune$lambda)
+```
 

@@ -38,7 +38,8 @@ confusionMatrix(data = as.factor(pred_classes), reference = as.factor(testData$r
 # calculate AUC
 library(pROC)
 auc <- roc(testData$readmitted, as.numeric(pred_classes))
+ggroc(auc) + ggtitle("ROC curve of GLMnet with 10-fold validation")
 print(auc$auc)
 
 plot(varImp(glmnet_fit,scale=F))
-summary(glmnet_fit)
+coef(glmnet_fit$finalModel, s = glmnet_fit$bestTune$lambda)
