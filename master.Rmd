@@ -1,6 +1,6 @@
 ---
 title: "Predicting Hospital Readmission"
-date: "Due December 16, 2018"
+date: "December 16, 2018"
 output: html_document
 ---
 
@@ -8,22 +8,28 @@ output: html_document
 knitr::opts_chunk$set(cache = TRUE)
 ```
 
+# Overview and Motivation 
+
+A hospital readmission is when a patient who is discharged from the hospital, gets re-admitted again within a certain period of time. The rates of hosptial readmission are now considered an indicator of hospital quality and also contributes to the high cost of healthcare in America. In order to adress this issue, the Centers for Medicare & Medicaid Services has established the [Hospital Readmissions Reduction Program (HRRP)](https://www.cms.gov/medicare/medicare-fee-for-service-payment/acuteinpatientpps/readmissions-reduction-program.html) with the goal of improving the quality of care for patients and reducing healthcare spending. The primary way in which they do this apply bying payment penalties to hospitals that have more than expected readmission rates for certain conditions.  While diabetes has not yet been added to HRBP's list of conditions, Diabetes is the is the [condition with the 3rd most all-cause, 30-day readmissions for Medicaid patients, and in 2011 American hospitals spent over $41 billion on diabetic patients who got readmitted within 30 days of discharge] (https://www.hcup-us.ahrq.gov/reports/statbriefs/sb172-Conditions-Readmissions-Payer.jsp). 
+
+The ability to determine which risk factors lead to higher readmission in such patients, and accordingly being able to predict which patients will get readmitted, could help save hospitals billions of dollars while also improving thef quality of care. With this goal in mind, we set out to answer these two questions: 
+
+    1. How well can we predict 30 day hospital readmission of diabetes patients using medical claims data?
+    2. What factors are the most important in predicting hosptial readmissions in a diabetic patient? 
+
+# Dataset 
+
 The dataset we will be working with represents 10 years (1999-2008) of clinical care at 130 US hospitals and integrated delivery networks. It includes over 50 features representing patient and hospital outcomes. Information was extracted from the database for encounters that satisfied the following criteria.
 
-1. It is an inpatient encounter (a hospital admission).
-2. It is a diabetic encounter, that is, one during which any kind of diabetes was entered to the system as a diagnosis.
-3. The length of stay was at least 1 day and at most 14 days.
-4. Laboratory tests were performed during the encounter.
-5. Medications were administered during the encounter.
+    1. It is an inpatient encounter (a hospital admission).
+    2. It is a diabetic encounter, that is, one during which any kind of diabetes was entered to the system as a diagnosis.
+    3. The length of stay was at least 1 day and at most 14 days.
+    4. Laboratory tests were perfocrmed during the encounter.
+    5. Medications were administered during the encounter.
 
-The data contains such attributes as patient number, race, gender, age, admission type, time in hospital, medical specialty of admitting physician, number of lab test performed, HbA1c test result, diagnosis, number of medication, diabetic medications, number of outpatient, inpatient, and emergency visits in the year before the hospitalization, etc.
+The data contains such attributes as patient number, race, gender, age, admission type, time in hospital, medical specialty of admitting physician, number of lab test performed, HbA1c test reslt, diagnosis, number of medication, diabetic medications, number of outpatient, inpatient, and emergency visits in the year before the hospitalization, etc.
 
-The dataset is avaliable from the [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Diabetes+130-US+hospitals+for+years+1999-2008). 
-
-The project is a 2-way classification task in which we try to predict if a patient will either
-
-1. Not be readmitted
-2. Readmitted in <30 days
+The dataset is publicly avaliable from the [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Diabetes+130-US+hospitals+for+years+1999-2008). 
 
 ```{r, echo = FALSE, message = FALSE}
 # import all necessary libraries 
@@ -39,22 +45,23 @@ library(pROC)
 library(DMwR)
 library(Rtsne)
 library(glmnet)
+library(doParallel)
 theme_set(theme_bw())
 ```
 
-### Read in the dataset 
+## Read in the dataset 
+
+To get us started, we read in the dataset and remove any patients that appear more than once in the dataset in order to avoid any bias that might come with this overreprsentation of certain patients. This resulted in dataset being reduced to approximately 70,000 encounters:
+
 ```{r}
 # Reading in data
 data <- read.csv("dataset/diabetic_data.csv")
 
 # remove duplicates
 data <- data[!duplicated(data$patient_nbr), ]
-
-# summary of the data 
-str(data)
 ```
 
-### Data Preparation and Preprocessing
+## Data Preparation and Preprocessing
 
 Before moving on to do some data cleaning, let’s observe the descriptive statistics of each column in the training dataset.
 
@@ -67,13 +74,13 @@ knitr::kable(skimmed[, c(1:3, 5:6, 9:10, 16)])
 ```
 
 Now, we will drop some of the columns for various reasons: 
-- Encounter ID: an uneccessary column that provides no information for readmission 
-- Patient Number: an unecessary column that provides no information for readmission
-- Weight: While potentially useful, there is too many missing values 
-- Payer Code: too many missing values 
-- Medical Specialty: probably unecessary and too many missing values 
-- Diabetes Medication: redundant information 
-- diag_2 and diag_3: ICD codes are hard to deal with and often lack predictive power
+    - Encounter ID: an uneccessary column that provides no information for readmission 
+    - Patient Number: an unecessary column that provides no information for readmission
+    - Weight: While potentially useful, there is too many missing values 
+    - Payer Code: too many missing values 
+    - Medical Specialty: probably unecessary and too many missing values 
+    - Diabetes Medication: redundant information 
+    - diag_2 and diag_3: ICD codes are hard to deal with and often lack predictive power, so we will try to use only primary diagnosis
 
 ```{r}
 drops <- c("encounter_id", "patient_nbr", "weight", "payer_code", 
@@ -92,8 +99,7 @@ data <- data %>% filter(gender != "Unknown/Invalid")
 data$gender <- droplevels(data$gender)
 ```
 
-
-##### Data Encodings 
+## Data Encodings 
 
 - Gender will be encoded as 0 for Female, 1 for Male
 ```{r}
@@ -167,7 +173,9 @@ data$readmitted <- ifelse((data$readmitted == "NO" | data$readmitted == ">30"), 
 data %>% group_by(readmitted) %>% summarize(count=n())
 ```
 
-##### New Features 
+We see that we have a highly imbalanced class problem. 
+
+## New Features 
 
 - Healthcare Utilization is calculated as the sum of number of outpatient, emergency, and inpatient encouters the patient has had in the past year
 ```{r}
@@ -213,7 +221,7 @@ drops2 <- c("metformin", "repaglinide", "nateglinide", "chlorpropamide", "glimep
 data <- data[ , !(names(data) %in% drops2)]
 ```
 
-##### One Hot Encodings 
+## One Hot Encodings 
 
 - Admission types, discharge dispositions, admission source will be grouped and one hot encoded
 ```{r}
@@ -279,6 +287,10 @@ data <- within(data, rm(diag_1))
 data <- na.omit(data)
 ```
 
+## Removing Highly Correlated Variables 
+
+We will take a look at the correlation matrix of our dataset, and remove any highly correlated variables (correlation greater than abs(0.6)).
+
 ```{r, fig.height=15, eval=F, echo=F}
 data <- data %>% select(-readmitted, readmitted) # move readmitted to the last column value
 cor_mat <- cor(data[, 1:46])
@@ -339,11 +351,19 @@ testData <- data[-trainRowNumbers,]
 # Step 4: Save the datasets 
 write.csv(trainData, file = "dataset/trainData.csv", row.names = F)
 write.csv(testData, file = "dataset/testData.csv", row.names = F)
+
+# recode the target variable as a factor
+trainData$readmitted <- as.factor(trainData$readmitted)
+testData$readmitted <- as.factor(testData$readmitted)
 ```
 
-### Exploratory Data Analysis
+# Exploratory Data Analysis
 
 ## PCA and t-SNE
+
+To get us started, we will try some dimensionality reduction techniques to see if there is any separation between our two classes. We start with principal component analysis (PCA) which uses an orthogonal transformation to convert the original variables into a set of linear combinations of the original variables, called **principal components**. PCA is commonly used as a tool in exploratory data analysis. 
+
+We also use the popular T-distributed Stochastic Neighbor Embedding (t-SNE) algorithm, which is a machine learning visualization tool. It is a non-linear dimensionality reduction technique that models each high-dimensional observation by a two-dimensional point in such a way that similar observations are modeled by nearby points with high probability.
 
 ```{r PCA_and_tSNE}
 pca_tsne_df <- data[,c(1:41)]
@@ -376,7 +396,7 @@ outdf$readmitted <- as.factor(outdf$readmitted)
 
 ggplot(outdf, aes(x = PC1, y = PC2)) +
   geom_point(aes(color = readmitted), alpha = 0.5) +
-  scale_color_manual(values = c("cadetblue3", "blue")) +
+  scale_color_manual(values = c("dodgerblue", "firebrick1")) +
   labs(title = "Classes are not well-separated by principal components")
 
 # TSNE
@@ -390,13 +410,14 @@ d_tsne_1$readmitted <- as.factor(data$readmitted)
 ## plotting the results without clustering
 ggplot(d_tsne_1, aes(x=V1, y=V2)) +  
   geom_point(aes(color = readmitted)) +
-  scale_color_manual(values = c("cadetblue3", "blue")) +
+  scale_color_manual(values = c("dodgerblue", "firebrick1")) +
   labs(title = "Classes are not well-separated by t-SNE")
 ```
 
-We do not see separation of readmitted classes by PCA or t-SNE analysis.
+We do not see any class separation of readmitted classes by PCA or t-SNE analysis.
 
 ## Composition Graphs 
+
 ```{r}
 ggplot(data=data, aes(x=factor(race, labels = c("Caucasian", "African American", "Other")), 
                               fill=factor(readmitted, 
@@ -586,9 +607,19 @@ ggplot(data=data, aes(x=factor(readmitted,
        title="Distribution of # of Diabetes Medications Changed Grouped by Readmission Status", fill="Readmission Status")
 ```
 
-### SMOTE Algorithm For Unbalanced Classification Problems
+# Statistical Analysis 
 
-"SMOTE is an oversampling method which creates new instances of the minority class by forming convex combinations of neighboring instances.  It effectively draws lines between minority points in the feature space, and samples along these lines. This allows us to balance our data-set without as much overfitting, as we create new synthetic examples rather than using duplicates. This however does not prevent all overfitting, as these are still created from existing data points." (https://towardsdatascience.com/dealing-with-imbalanced-classes-in-machine-learning-d43d6fa19d2)
+## Imbalanced Class Problem 
+
+We saw earlier that we have a large imbalanced class problem. Approximately 90% of our observations did not have a hosptial readmission within 30 days. This is about what we would expect given the problem domain. Most people will not be readmitted to the hospital, but a small subset of people will. Because of this, it is important to properly adjust the metrics and methods used to achieve our goal of predicting hosptial readmission. 
+
+Typically in a classification problem, one cares most about achieving accuracy. However, given that 90% of our points belong to one class, we could achieve 90% accuracy by just predicting the majority class every time. This isn't useful though because we are most interested in identifying instances of the miniority class, those who will have a hosptial readmission. In this case, it is more important to optimize for a metric like recall, precision, F1 score, and AUC. We will use these metrics, namely AUC, to compare our models. 
+
+## SMOTE Algorithm For Unbalanced Classification Problems
+
+One way to help improve the training process in an imbalanced class problem is to try to rebalance them by oeither versampling instances of the minority class or undersampling instances of the majority class. This should, in theory, lead to classifiers which are not biased torwards one class or another. One popular techinque for doing this is the [Synthetic Minority Over-sampling Technique (SMOTE)] (https://arxiv.org/pdf/1106.1813.pdf). 
+
+SMOTE is a method which creates new instances of the minority class by forming convex combinations of neighboring instances. It effectively draws lines between minority points in the feature space, and samples along these lines. This allows us to balance our data-set without as much overfitting, as we create new synthetic examples rather than using duplicates. Regardless, there is still the potential for overfitting given that we are still creating data from existing data points. 
 
 ```{r}
 if(file.exists("dataset/trainSMOTE.csv")) {
@@ -600,9 +631,17 @@ if(file.exists("dataset/trainSMOTE.csv")) {
 }
 ```
 
+## Machine Learning Classifiers 
+
+Our problem is a classic example of a two-way classification supervised learning problem. We will use three different machine learning models to try to predict hospital readmission: 
+
+    1. XGBoost 
+    2. KNN
+    3. GLMnet
+
 ### XGBoost
 
-XGBoost stands for e**X**treme **G**radient **B**oosting. You can read more about it [here](https://www.analyticsvidhya.com/blog/2018/09/an-end-to-end-guide-to-understand-the-math-behind-xgboost/). 
+XGBoost stands for [e**X**treme **G**radient **B**oosting](https://arxiv.org/abs/1603.02754). As indicated by the name, it is a boosting method that combines the output of many different Classification And Regression Trees (CART). CARTs are like decision trees except that in addition to simply producing a classification they attach a score to each individual leaf. When we combine several trees the values attached to a particular observation are added together. XGBoost's classification and regression outputs are based upon the output of the sum of these values. Training consists of selecting a new tree to add to the ensemble based upon which one best optimizes the loss function. Hence, why it is called gradient boosting; we are adding the trees that take a step in the best direction for optimizing the objective function.
 
 ```{r}
 # create XGB Boost dense matrix objects --> faster performance 
@@ -615,8 +654,8 @@ dtest <- xgb.DMatrix(data = as.matrix(testData[, 1:41]), label = as.numeric(test
 In machine learning, hyperparameter optimization is the problem of choosing a set of optimal hyperparameters for a learning algorithm. A hyperparameter is a parameter whose value is set before the learning process begins. By contrast, the values of other parameters are derived via training.
 
 ```{r}
-if(file.exists("xgb_params.csv")) {
-    best_params <- read.csv("xgb_params.csv")
+if(file.exists("dataset/xgb_params.csv")) {
+    best_params <- read.csv("dataset/xgb_params.csv")
 } else {
   param_grid <- expand.grid(objective = "binary:logistic",
                           eval_metric = "auc", 
@@ -637,7 +676,7 @@ if(file.exists("xgb_params.csv")) {
       best_params <- param_grid[i, ]
     } 
   }
-  write.csv(best_params, "xgb_params.csv", row.names = F)
+  write.csv(best_params, "dataset/xgb_params.csv", row.names = F)
 }
 
 ```
@@ -651,6 +690,8 @@ xgbPredict <- as.numeric(xgbPredict> 0.5)
 confusionMatrix(reference = as.factor(testData$readmitted), data = as.factor(xgbPredict), mode = "everything", positive="1")
 ```
 
+We see from this first model that we are not performing very well. We have an accuracy of 73.1%, precision of 15.04%, recall of 41.6%, and a F1 score of 0.22. 
+
 #### Variable Importance According to XGBoost
 
 ```{r, fig.width=15}
@@ -658,9 +699,9 @@ importance <- xgb.importance(model = xgb)
 xgb.ggplot.importance(importance_matrix = importance, top_n = 10)
 ```
 
-#### Simple ROC Curve
+According to the XGBoost algorithm, healthcare utilization, age, and time in hospital are the three most important factors for predicting hospital readmission. 
 
-ROC is a probability curve and AUC represents degree or measure of separability. It tells how much model is capable of distinguishing between classes. Higher the AUC, better the model is at predicting 0s as 0s and 1s as 1s. You can read more about it [here](https://towardsdatascience.com/understanding-auc-roc-curve-68b2303cc9c5). 
+#### Simple ROC Curve
 
 ```{r}
 pred <- prediction(xgbPredict, testData$readmitted)
@@ -670,23 +711,32 @@ plot(perf_ROC, main="ROC plot")
 text(0.9, 0.0,paste("AUC = ",format(AUC, digits=3, scientific=FALSE)))
 ```
 
+We see that XGBoost produces a testing AUC-ROC of 0.59. 
+
 ### KNN
 
-```{r}
-ctrl <- trainControl(method="cv", number = 5)
-knn <- train(as.factor(readmitted) ~ ., data = trainData_SMOTE, method = "knn", metric = "kappa",
-             trControl = ctrl, preProcess = c("center","scale"), tuneLength = 10)
-knn
-```
+KNN is an algorithm that takes in numerical features, then calculates the distance between a given observation and all the other observations in the dataset, then chooses the predicted label for the given point based on what label the majority of that point’s “K nearest neighbors” (K points closest to the point of interest) possess. For this reason it is important to choose a $K$ in such a way as to avoid tie votes among the “K neighbors.”
 
 ```{r}
+ctrl <- trainControl(method="cv", number = 10)
+cl <- makePSOCKcluster(detectCores())
+registerDoParallel(cl)
+knn <- train(as.factor(readmitted) ~ ., data = trainData_SMOTE, method = "knn", metric = "kappa",
+             trControl = ctrl, preProcess = c("center","scale"), tuneLength = 5)
+stopCluster(cl)
 plot(knn)
 ```
+
+We see that even just testing KNN on 5 different k values that our performance is decreasing with increased values of k. Therefore, we choose not to test any more. 
 
 ```{r}
 knnPredict <- predict(knn, testData)
 confusionMatrix(reference = as.factor(testData$readmitted), data = as.factor(knnPredict), mode = "everything", positive="1")
 ```
+
+We see from this model that we are still not performing very well. We have an accuracy of 61.78%, precision of 11.11%, recall of 45.42%, and a F1 score of 0.18. 
+
+#### Simple ROC Curve
 
 ```{r}
 knnPred <- prediction(as.numeric(knnPredict), testData$readmitted)
@@ -696,72 +746,75 @@ plot(knn_perf_ROC, main="ROC plot")
 text(0.9, 0.0,paste("AUC = ",format(knn_AUC, digits=3, scientific=FALSE)))
 ```
 
+We see that KNN produces a testing AUC-ROC of 0.544. 
+
 ### GLMnet
 
-GLMnet fits a generalized linear model via penalized maximum likelihood. The algorithm implemented in the package computes the regularization path for the elastic-net penalty over a grid of values for the regularization parameter λ (https://web.stanford.edu/~hastie/glmnet/glmnet_alpha.html#log). To reduce noise caused by data-splitting, we used 10-fold cross-validation for tuning parameter values using the caret package as described here (http://www.milanor.net/blog/cross-validation-for-predictive-analytics-using-r/).
+GLMnet fits a generalized linear model via penalized maximum likelihood. The algorithm implemented in the package computes the regularization path for the elastic-net penalty over a grid of values for the regularization parameter $\lambda$ (https://web.stanford.edu/~hastie/glmnet/glmnet_alpha.html#log). To reduce noise caused by data-splitting, we used 10-fold cross-validation for tuning parameter values using the caret package as described here (http://www.milanor.net/blog/cross-validation-for-predictive-analytics-using-r/).
 
-#### Reading in the training and test dataset
-
-The training dataset is the train_SMOTE dataset generated above.
+#### Hyperparameter Optimization and Trainging of GLMnet
 
 ```{r}
-trainData <- read.csv("./dataset/trainSMOTE.csv")
-trainData <- trainData %>% mutate(readmitted = as.factor(readmitted))
-testData <- read.csv("./dataset/testData.csv")
-testData <- testData %>% mutate(readmitted = as.factor(readmitted))
-```
+trainData_SMOTE$readmitted <- as.factor(trainData_SMOTE$readmitted)
+#cv_splits <- createFolds(trainData_SMOTE$readmitted, k = 10, returnTrain = TRUE)
 
-#### Set up 10-fold data partition
-
-```{r}
-cv_splits <- createFolds(trainData$readmitted, k = 10, returnTrain = TRUE)
-str(cv_splits)
-```
-
-#### Fit glmnet using elastic-net penalty using a range of alpha and lambdas
-
-```{r}
 glmnet_grid <- expand.grid(alpha = c(0,  .1,  .2, .4, .6, .8, 1),
-                           lambda = seq(.01, .2, length = 20))
-glmnet_ctrl <- trainControl(method = "cv", number = 10)
+                           lambda = seq(.01, .2, length = 10))
+glmnet_ctrl <- trainControl(method = "cv", number = 20)
 
-glmnet_fit <- train(readmitted ~ ., data = trainData,
+cl <- makePSOCKcluster(detectCores())
+registerDoParallel(cl)
+glmnet_fit <- train(readmitted ~ ., data = trainData_SMOTE,
                     method = "glmnet",
                     family = "binomial",
                     preProcess = c("center", "scale"),
                     tuneGrid = glmnet_grid,
                     trControl = glmnet_ctrl)
+stopCluster(cl)
 
 # Best tuning parameters
 glmnet_fit$bestTune
 ```
-
-#### Plot acuracy against tuning parameters
 
 ```{r}
 trellis.par.set(caretTheme())
 plot(glmnet_fit, scales = list(x = list(log = 2)))
 ```
 
-#### Predict outcome using the test set
-
 ```{r}
 pred_classes <- predict(glmnet_fit, newdata = testData, type = "raw")
-confusionMatrix(data = as.factor(pred_classes), reference = as.factor(testData$readmitted))
+confusionMatrix(data = as.factor(pred_classes), reference = as.factor(testData$readmitted), mode = "everything", positive="1")
 ```
 
-#### ROC curves
-
-```{r}
-auc <- roc(testData$readmitted, as.numeric(pred_classes))
-ggroc(auc) + ggtitle("ROC curve of GLMnet with 10-fold validation")
-print(auc$auc)
-```
+Even in our last model, we are still not performing very well. We have an accuracy of 76.06%, precision of 15.4%, recall of 36.84%, and a F1 score of 0.21. 
 
 #### Model coefficients as selected by GLMnet
 
 ```{r}
-plot(varImp(glmnet_fit,scale=F))
-coef(glmnet_fit$finalModel, s = glmnet_fit$bestTune$lambda)
+plot(varImp(glmnet_fit,scale=F), top = 10)
+coef(glmnet_fit$finalModel, s = glmnet_fit$bestTune$lambda) 
 ```
 
+The most important features for predicting hospital readmission according to GLMnet are wheteher of not a patient was transfered to another facility at dischagre, the number of inpatient visists in the past year for a patient, and their A1C test result. 
+
+#### Simple ROC Curve
+
+```{r}
+glmPred <- prediction(as.numeric(pred_classes), testData$readmitted)
+glm_AUC <- performance(glmPred, "auc")@y.values[[1]]
+glm_perf_ROC=performance(glmPred,"tpr","fpr") #plot the actual ROC curve
+plot(glm_perf_ROC, main="ROC plot")
+text(0.9, 0.0,paste("AUC = ",format(glm_AUC, digits=3, scientific=FALSE)))
+```
+
+We see that GLMnet produces a testing AUC-ROC of 0.581. 
+
+# Conclusion 
+
+```{r, echo=FALSE}
+results <- data.frame("ML Model" = c("XGBoost", "KNN", "GLMnet"), "AUC" = c(0.59, 0.544, 0.581), "Recall" = c( 0.416, 0.454, 0.360), 
+           "Precision" = c(0.150, 0.111, 0.154), "F1 Score" = c(0.221, 0.179, 0.216))
+results %>% knitr::kable()
+```
+
+As we can see, none of our models were very succesful at predicting hospital readmission. Based on the above metrics, it appears that XGBoost performs the best, but it is still not very good. We see that we only correctly predict 41.6% of the cases that will be readmitted, and only 15% of the patients predicted to be readmitted actually will be. In the end, it seems like the current features from medical claims data are not sufficient in predicting hospital readmission. This can be seen in our exploratory data analysis as well where there appeared to be no real separation between classes across different predictor variables. 
