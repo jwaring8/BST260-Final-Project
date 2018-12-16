@@ -87,412 +87,11 @@
 									</ol>
 									<p> The data contains such attributes as patient number, race, gender, age, admission type, time in hospital, medical specialty of admitting physician, number of lab test performed, HbA1c test reslt, diagnosis, number of medication, diabetic medications, number of outpatient, inpatient, and emergency visits in the year before the hospitalization, etc. This dataset is made publicly avaliable by the <a href = "https://archive.ics.uci.edu/ml/datasets/Diabetes+130-US+hospitals+for+years+1999-2008"> UCI Machine Learning Repository </a> </p>
 									<p> Numerous steps were taken to clean the dataset, including the addition and removal of certain features. The final dataset features are described below: </p>
-									<table>
-										<caption>Characteristics of Diabetic Patient Hospital Encounters</caption>
-										 <thead>
-										  <tr>
-										   <th style="text-align:left;"> Feature </th>
-										   <th style="text-align:left;"> Sub Category </th>
-										   <th style="text-align:left;"> No Readmission </th>
-										   <th style="text-align:left;"> Readmission </th>
-										   <th style="text-align:left;"> p-value </th>
-										  </tr>
-										 </thead>
-										<tbody>
-										  <tr>
-										   <td style="text-align:left;"> n </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 64129 </td>
-										   <td style="text-align:left;"> 6291 </td>
-										   <td style="text-align:left;">  </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Age (mean (sd)) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 65.29 (16.04) </td>
-										   <td style="text-align:left;"> 67.85 (15.08) </td>
-										   <td style="text-align:left;"> &lt;0.001 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Male (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 30033 (46.8) </td>
-										   <td style="text-align:left;"> 2921 (46.4) </td>
-										   <td style="text-align:left;"> 0.552 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Race (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> &lt;0.001 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> Caucasian </td>
-										   <td style="text-align:left;"> 47844 (74.6) </td>
-										   <td style="text-align:left;"> 4816 (76.6) </td>
-										   <td style="text-align:left;">  </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> African American </td>
-										   <td style="text-align:left;"> 11595 (18.1) </td>
-										   <td style="text-align:left;"> 1093 (17.4) </td>
-										   <td style="text-align:left;">  </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> Other </td>
-										   <td style="text-align:left;"> 4690 (7.3) </td>
-										   <td style="text-align:left;"> 382 (6.1) </td>
-										   <td style="text-align:left;">  </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Time in Hospital (mean (sd)) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 4.23 (2.92) </td>
-										   <td style="text-align:left;"> 4.80 (3.06) </td>
-										   <td style="text-align:left;"> &lt;0.001 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Number of Labs (mean (sd)) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 42.72 (19.95) </td>
-										   <td style="text-align:left;"> 44.93 (19.35) </td>
-										   <td style="text-align:left;"> &lt;0.001 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Number of Procedures (mean (sd)) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 1.42 (1.76) </td>
-										   <td style="text-align:left;"> 1.42 (1.73) </td>
-										   <td style="text-align:left;"> 0.963 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Number of Medications (mean (sd)) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 15.57 (8.27) </td>
-										   <td style="text-align:left;"> 16.62 (8.32) </td>
-										   <td style="text-align:left;"> &lt;0.001 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Number of ED Visits (mean (sd)) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 0.10 (0.50) </td>
-										   <td style="text-align:left;"> 0.15 (0.58) </td>
-										   <td style="text-align:left;"> &lt;0.001 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Number of Inpatient Visits (mean (sd)) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 0.16 (0.55) </td>
-										   <td style="text-align:left;"> 0.37 (0.99) </td>
-										   <td style="text-align:left;"> &lt;0.001 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Number of Diagnoses (mean (sd)) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 7.20 (2.01) </td>
-										   <td style="text-align:left;"> 7.51 (1.85) </td>
-										   <td style="text-align:left;"> &lt;0.001 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Healthcare Utilization (mean (sd)) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 0.53 (1.40) </td>
-										   <td style="text-align:left;"> 0.83 (1.71) </td>
-										   <td style="text-align:left;"> &lt;0.001 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Max Serum Glucose (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 0.033 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> Not Measured </td>
-										   <td style="text-align:left;"> 61086 (95.3) </td>
-										   <td style="text-align:left;"> 5949 (94.6) </td>
-										   <td style="text-align:left;">  </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> Normal </td>
-										   <td style="text-align:left;"> 1551 (2.4) </td>
-										   <td style="text-align:left;"> 166 (2.6) </td>
-										   <td style="text-align:left;">  </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> High </td>
-										   <td style="text-align:left;"> 1492 (2.3) </td>
-										   <td style="text-align:left;"> 176 (2.8) </td>
-										   <td style="text-align:left;">  </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Hemoglobin A1C (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 0.044 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> Not Measured </td>
-										   <td style="text-align:left;"> 52333 (81.6) </td>
-										   <td style="text-align:left;"> 5212 (82.8) </td>
-										   <td style="text-align:left;">  </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> Normal </td>
-										   <td style="text-align:left;"> 3433 (5.4) </td>
-										   <td style="text-align:left;"> 323 (5.1) </td>
-										   <td style="text-align:left;">  </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> Abnormal </td>
-										   <td style="text-align:left;"> 8363 (13.0) </td>
-										   <td style="text-align:left;"> 756 (12.0) </td>
-										   <td style="text-align:left;">  </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Insulin Use (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> &lt;0.001 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> None </td>
-										   <td style="text-align:left;"> 31610 (49.3) </td>
-										   <td style="text-align:left;"> 2841 (45.2) </td>
-										   <td style="text-align:left;">  </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> Decreased </td>
-										   <td style="text-align:left;"> 6595 (10.3) </td>
-										   <td style="text-align:left;"> 775 (12.3) </td>
-										   <td style="text-align:left;">  </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> Unchanged </td>
-										   <td style="text-align:left;"> 19771 (30.8) </td>
-										   <td style="text-align:left;"> 2004 (31.9) </td>
-										   <td style="text-align:left;">  </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> Increased </td>
-										   <td style="text-align:left;"> 6153 (9.6) </td>
-										   <td style="text-align:left;"> 671 (10.7) </td>
-										   <td style="text-align:left;">  </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Number of Oral Anti-Glycemics (mean (sd)) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 0.68 (0.82) </td>
-										   <td style="text-align:left;"> 0.68 (0.79) </td>
-										   <td style="text-align:left;"> 0.814 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Any Medication Change (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 28679 (44.7) </td>
-										   <td style="text-align:left;"> 2978 (47.3) </td>
-										   <td style="text-align:left;"> &lt;0.001 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Admission Type - Elective (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 12686 (19.8) </td>
-										   <td style="text-align:left;"> 1143 (18.2) </td>
-										   <td style="text-align:left;"> 0.002 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Discharge Disposition - Facility (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 11979 (18.7) </td>
-										   <td style="text-align:left;"> 2058 (32.7) </td>
-										   <td style="text-align:left;"> &lt;0.001 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Discharge Disposition - Other (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 3351 (5.2) </td>
-										   <td style="text-align:left;"> 359 (5.7) </td>
-										   <td style="text-align:left;"> 0.109 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Admission Source - Facility (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 4446 (6.9) </td>
-										   <td style="text-align:left;"> 408 (6.5) </td>
-										   <td style="text-align:left;"> 0.19 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Admission Source - ED (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 34102 (53.2) </td>
-										   <td style="text-align:left;"> 3457 (55.0) </td>
-										   <td style="text-align:left;"> 0.007 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Admission Source - Other (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 4668 (7.3) </td>
-										   <td style="text-align:left;"> 453 (7.2) </td>
-										   <td style="text-align:left;"> 0.839 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Primary Diagnosis </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;">  </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Diseases of the Blood (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 590 (0.9) </td>
-										   <td style="text-align:left;"> 64 (1.0) </td>
-										   <td style="text-align:left;"> 0.485 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Diseases of the Circulatory System (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 5241 (8.2) </td>
-										   <td style="text-align:left;"> 525 (8.3) </td>
-										   <td style="text-align:left;"> 0.651 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Diseases of the respiratory system (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 8874 (13.8) </td>
-										   <td style="text-align:left;"> 691 (11.0) </td>
-										   <td style="text-align:left;"> &lt;0.001 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Diabetes Mellitus (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 19420 (30.3) </td>
-										   <td style="text-align:left;"> 2077 (33.0) </td>
-										   <td style="text-align:left;"> &lt;0.001 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Diseases of the Digestive System (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 5990 (9.3) </td>
-										   <td style="text-align:left;"> 522 (8.3) </td>
-										   <td style="text-align:left;"> 0.007 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Endocrine, Nutritional, and Metabolic Diseases (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 1695 (2.6) </td>
-										   <td style="text-align:left;"> 167 (2.7) </td>
-										   <td style="text-align:left;"> 0.99 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Diseases of the genitourinary system (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 3166 (4.9) </td>
-										   <td style="text-align:left;"> 311 (4.9) </td>
-										   <td style="text-align:left;"> 1 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Infectious and parasitic diseases (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 1540 (2.4) </td>
-										   <td style="text-align:left;"> 163 (2.6) </td>
-										   <td style="text-align:left;"> 0.373 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Diseases of the musculoskeletal system (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 3730 (5.8) </td>
-										   <td style="text-align:left;"> 341 (5.4) </td>
-										   <td style="text-align:left;"> 0.209 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Neoplasms (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 2427 (3.8) </td>
-										   <td style="text-align:left;"> 231 (3.7) </td>
-										   <td style="text-align:left;"> 0.68 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Injury and poisoning (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 4196 (6.5) </td>
-										   <td style="text-align:left;"> 506 (8.0) </td>
-										   <td style="text-align:left;"> &lt;0.001 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Mental disorders (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 1381 (2.2) </td>
-										   <td style="text-align:left;"> 165 (2.6) </td>
-										   <td style="text-align:left;"> 0.017 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Diseases of the nervous system (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 585 (0.9) </td>
-										   <td style="text-align:left;"> 59 (0.9) </td>
-										   <td style="text-align:left;"> 0.893 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> External Cause (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 799 (1.2) </td>
-										   <td style="text-align:left;"> 124 (2.0) </td>
-										   <td style="text-align:left;"> &lt;0.001 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Pregnancy Complications (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 560 (0.9) </td>
-										   <td style="text-align:left;"> 26 (0.4) </td>
-										   <td style="text-align:left;"> &lt;0.001 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Diseases of the sense organs (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 211 (0.3) </td>
-										   <td style="text-align:left;"> 8 (0.1) </td>
-										   <td style="text-align:left;"> 0.009 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Diseases of the skin and subcutaneous tissue (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 1698 (2.6) </td>
-										   <td style="text-align:left;"> 146 (2.3) </td>
-										   <td style="text-align:left;"> 0.131 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Other (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 1672 (2.6) </td>
-										   <td style="text-align:left;"> 138 (2.2) </td>
-										   <td style="text-align:left;"> 0.053 </td>
-										  </tr>
-										  <tr>
-										   <td style="text-align:left;"> Unknown (%) </td>
-										   <td style="text-align:left;">  </td>
-										   <td style="text-align:left;"> 354 (0.6) </td>
-										   <td style="text-align:left;"> 27 (0.4) </td>
-										   <td style="text-align:left;"> 0.239 </td>
-										  </tr>
-										</tbody>
-										</table>
+									<div class="features">
+										<article>
+											<img src='images/Table1.png' width="100%" alt="" />
+										</article>
+									</div>
 								</div>
 							</section>
 
@@ -515,7 +114,7 @@
                                             <img src="images/PCA.png" width="100%" alt="" />
                                         </article>
                                         <article>
-                                            <img src="images/t_SNA.png" width="100%" alt="" />
+                                            <img src="images/t_SNE.png" width="100%" alt="" />
                                         </article>
                                     </div>
                                     <p> The first few principle components explain only a small percentage of the variance: <br />
@@ -577,7 +176,7 @@
                                         <p> <a href = "https://web.stanford.edu/~hastie/glmnet/glmnet_alpha.html#log">GLMnet</a> fits a generalized linear model via penalized maximum likelihood. The algorithm implemented in the package computes the regularization path for the elastic-net penalty over a grid of values for the regularization parameter λ. The elastic-net penalty is controlled by α, and bridges the gap between lasso (α=1, the default) and ridge (α=0). The tuning parameter λ controls the overall strength of the penalty. To reduce noise caused by data-splitting, we used 10-fold cross-validation for tuning parameter values using the caret package as described <a href = "http://www.milanor.net/blog/cross-validation-for-predictive-analytics-using-r/">here</a>. In our dataset, the best tuning parameter chosen after 10-fold cross validation is α = 0, λ = 0.01. This means that we are effectively using a lasso. <br />
                                         <div class="features">
                                             <article>
-                                                <img src="images/ROC_GLMnet" width="100%" alt="" />
+                                                <img src="images/ROC_GLMnet.png" width="100%" alt="" />
                                             </article>
                                         </div>
                                         <br /> Here are the most important features selected by GLMnet: </p>
@@ -588,7 +187,7 @@
                                         </div>
 									</div>
 								</section>
-								
+
 						<!-- Six -->
 							<section id="six">
 								<div class="container">
@@ -613,7 +212,7 @@
 							<section id="seven">
 								<div class="container">
 									<h3>References</h3>
-									       
+
               					<ol>
               							<li>Strack B, DeShazo JP, Gennings C, Olmo JL, Ventura S, Cios KJ, Clore JN: 	<b>Impact of HbA1c measurement on hospital readmission rates: analysis of 70,000 clinical database patient records</b>. <i>Biomed Res Int</i> 2014, <b>2014</b>:781670</li>
               							<li>Centers for Disease Control and Prevention: <b>National Diabetes Statistics Report, 2017</b>. In. Edited by Centers for Disease Control and Prevention US Department of Health and Human Services. Atlanta, GA; 2017</li>
@@ -640,7 +239,7 @@
 								</div>
 							</section>
 
-								
+
 					</div>
 
 				<!-- Footer -->
