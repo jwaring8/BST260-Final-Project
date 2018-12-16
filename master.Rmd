@@ -429,6 +429,46 @@ ggplot(d_tsne_1, aes(x=V1, y=V2)) +
 
 We do not see any class separation of readmitted classes by PCA or t-SNE analysis.
 
+## Grid of plots for website
+
+```{r}
+# script for making grid of plots for website
+
+p1 <- ggplot(data=data, aes(x=factor(readmitted, labels = c("No Readmission \nwithin 30 Days", "Readmission \nin < 30 Days")), y=num_lab_procedures)) + 
+  geom_boxplot(fill="firebrick1", alpha=0.6) + 
+  labs(y="Number of Lab Procedures", x="Readmission Status", title="Number of Lab Procedures", fill="Readmission Status") +
+  theme(axis.title.x = element_blank(), plot.margin = margin(0.5,0.5,0.5,0.5,"cm"))
+
+p2 <- ggplot(data=data, aes(x=factor(readmitted, labels = c("No Readmission \nwithin 30 Days", "Readmission \nin < 30 Days")), y=num_procedures)) + 
+  geom_boxplot(fill="firebrick1", alpha=0.6) + 
+  labs(y="Number of Non-Lab Procedures", x="Readmission Status", title="Number of Non-Lab Procedures", fill="Readmission Status") +
+  theme(axis.title.x = element_blank(), plot.margin = margin(0.5,0.5,0.5,0.5,"cm"))
+
+p3 <- ggplot(data=data, aes(x=factor(readmitted, labels = c("No Readmission \nwithin 30 Days", "Readmission \nin < 30 Days")), y=num_medications)) + 
+  geom_boxplot(fill="firebrick1", alpha=0.6) + 
+  labs(y="Number of Medications Administered", x="Readmission Status", title="Number of Medications Administered", fill="Readmission Status") +
+  theme(axis.title.x = element_blank(), plot.margin = margin(0.5,0.5,0.5,0.5,"cm"))
+
+p4 <- ggplot(data=data, aes(x=factor(readmitted, labels = c("No Readmission \nwithin 30 Days", "Readmission \nin < 30 Days")), y=healthcare_utilization)) + 
+  geom_boxplot(fill="firebrick1", alpha=0.6) + 
+  labs(y="Healthcare Utilization", x="Readmission Status", title="Healtchare Utilization", fill="Readmission Status") +
+  theme(axis.title.x = element_blank(), plot.margin = margin(0.5,0.5,0.5,0.5,"cm"))
+
+p5 <- ggplot(data=data, aes(x=factor(readmitted, labels = c("No Readmission \nwithin 30 Days", "Readmission \nin < 30 Days")), y=num_other_diabetes_meds_up_stdy_dwn)) + 
+  geom_boxplot(fill="firebrick1", alpha=0.6) + 
+  labs(y="Number of Diabetes Medications Changed", x="Readmission Status", title="Number of Diabetes Medications Changed", fill="Readmission Status") + 
+  theme(axis.title.x = element_blank(), plot.margin = margin(0.5,0.5,0.5,0.5,"cm"))
+
+p6 <- ggplot(data=data, aes(x=factor(readmitted, labels = c("No Readmission \nwithin 30 Days", "Readmission \nin < 30 Days")), y=number_diagnoses)) + 
+  geom_boxplot(fill="firebrick1", alpha=0.6) + 
+  labs(y="# of Diagnoses", x="Readmission Status", title="Number of Diagnoses", fill="Readmission Status") +
+  theme(axis.title.x = element_blank(), plot.margin = margin(0.5,0.5,0.5,0.5,"cm"))
+
+ggsave(grid.arrange(p1, p2, p3, p4, p5, p6, ncol=2), filename = "docs/images/feature_grid.png", width = 8.5, height = 11)
+```
+
+
+
 ## Composition Graphs 
 
 ```{r}
