@@ -835,7 +835,7 @@ stopCluster(cl)
 glmnet_fit$bestTune
 ```
 
-The best tuning parameter chosen after 10-fold cross validation is $\alpha = 0, \lambda = 0.01$. This means that we are effectively using a lasso. 
+The best tuning parameter chosen after 10-fold cross validation is $\alpha = 0, \lambda = 0.01$. This means that we are effectively using a ridge regression. 
 
 ```{r}
 trellis.par.set(caretTheme())
@@ -856,7 +856,7 @@ plot(varImp(glmnet_fit,scale=F), top = 10)
 coef(glmnet_fit$finalModel, s = glmnet_fit$bestTune$lambda) 
 ```
 
-The most important features for predicting hospital readmission according to GLMnet are wheteher of not a patient was transfered to another facility at dischagre, the number of inpatient visists in the past year for a patient, and their A1C test result. 
+The most important features for predicting hospital readmission according to GLMnet are wheteher of not a patient was transfered to another facility at dischagre, the number of inpatient visits in the past year for a patient, and their A1C test result. 
 
 #### Simple ROC Curve
 
