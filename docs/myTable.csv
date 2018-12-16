@@ -1,58 +1,2 @@
-,,No Readmission <30d,Readmission <30d,p
-n,,64129,6291,
-Age (mean (sd)),,65.29 (16.04),67.85 (15.08),<0.001
-Male (%),,30033 (46.8),2921 (46.4),0.552
-Race (%),,,,<0.001
-,Caucasian,47844 (74.6),4816 (76.6),
-,African American,11595 (18.1),1093 (17.4),
-,Other,4690 (7.3),382 (6.1),
-Time in Hospital (mean (sd)),,4.23 (2.92),4.80 (3.06),<0.001
-Number of Labs (mean (sd)),,42.72 (19.95),44.93 (19.35),<0.001
-Number of Procedures (mean (sd)),,1.42 (1.76),1.42 (1.73),0.963
-Number of Medications (mean (sd)),,15.57 (8.27),16.62 (8.32),<0.001
-Number of ED Visits (mean (sd)),,0.10 (0.50),0.15 (0.58),<0.001
-Number of Inpatient Visits (mean (sd)),,0.16 (0.55),0.37 (0.99),<0.001
-Number of Diagnoses (mean (sd)),,7.20 (2.01),7.51 (1.85),<0.001
-healthcare_utilization (mean (sd)),,0.53 (1.40),0.83 (1.71),<0.001
-Max Serum Glucose (%),,,,0.033
-,Not Measured,61086 (95.3),5949 (94.6),
-,Normal,1551 (2.4),166 (2.6),
-,High,1492 (2.3),176 (2.8),
-Hemoglobin A1C (%),,,,0.044
-,Not Measured,52333 (81.6),5212 (82.8),
-,Normal,3433 (5.4),323 (5.1),
-,Abnormal,8363 (13.0),756 (12.0),
-Insulin Use (%),,,,<0.001
-,None,31610 (49.3),2841 (45.2),
-,Decreased,6595 (10.3),775 (12.3),
-,Unchanged,19771 (30.8),2004 (31.9),
-,Increased,6153 (9.6),671 (10.7),
-Number of Oral Anti-Glycemics (mean (sd)),,0.68 (0.82),0.68 (0.79),0.814
-Any Medication Change (%),,28679 (44.7),2978 (47.3),<0.001
-Admission Type - Elective (%),,12686 (19.8),1143 (18.2),0.002
-Discharge Disposition - Facility (%),,11979 (18.7),2058 (32.7),<0.001
-Discharge Disposition - Other (%),,3351 (5.2),359 (5.7),0.109
-Admission Source - Facility (%),,4446 (6.9),408 (6.5),0.19
-Admission Source - ED (%),,34102 (53.2),3457 (55.0),0.007
-Admission Source - Other (%),,4668 (7.3),453 (7.2),0.839
-Primary Diagnosis,,,,
-Diseases of the Blood (%),,590 (0.9),64 (1.0),0.485
-Diseases of the Circulatory System (%),,5241 (8.2),525 (8.3),0.651
-Diseases of the respiratory system (%),,8874 (13.8),691 (11.0),<0.001
-Diabetes Mellitus (%),,19420 (30.3),2077 (33.0),<0.001
-Diseases of the Digestive System (%),,5990 (9.3),522 (8.3),0.007
-"Endocrine, Nutritional, and Metabolic Diseases (%)",,1695 (2.6),167 (2.7),0.99
-Diseases of the genitourinary system (%),,3166 (4.9),311 (4.9),1
-Infectious and parasitic diseases (%),,1540 (2.4),163 (2.6),0.373
-Diseases of the musculoskeletal system (%),,3730 (5.8),341 (5.4),0.209
-Neoplasms (%),,2427 (3.8),231 (3.7),0.68
-Injury and poisoning (%),,4196 (6.5),506 (8.0),<0.001
-Mental disorders (%),,1381 (2.2),165 (2.6),0.017
-Diseases of the nervous system (%),,585 (0.9),59 (0.9),0.893
-External Cause (%),,799 (1.2),124 (2.0),<0.001
-Pregnancy Complications (%),,560 (0.9),26 (0.4),<0.001
-Diseases of the sense organs (%),,211 (0.3),8 (0.1),0.009
-"
-Diseases of the skin and subcutaneous tissue (%)",,1698 (2.6),146 (2.3),0.131
-Other (%),,1672 (2.6),138 (2.2),0.053
-Unknown (%),,354 (0.6),27 (0.4),0.239
+,,No Readmission <30d,Readmission <30d,pn,,64129,6291,Age (mean (sd)),,65.29 (16.04),67.85 (15.08),<0.001Male (%),,30033 (46.8),2921 (46.4),0.552Race (%),,,,<0.001,Caucasian,47844 (74.6),4816 (76.6),,African American,11595 (18.1),1093 (17.4),,Other,4690 (7.3),382 (6.1),Time in Hospital (mean (sd)),,4.23 (2.92),4.80 (3.06),<0.001Number of Labs (mean (sd)),,42.72 (19.95),44.93 (19.35),<0.001Number of Procedures (mean (sd)),,1.42 (1.76),1.42 (1.73),0.963Number of Medications (mean (sd)),,15.57 (8.27),16.62 (8.32),<0.001Number of ED Visits (mean (sd)),,0.10 (0.50),0.15 (0.58),<0.001Number of Inpatient Visits (mean (sd)),,0.16 (0.55),0.37 (0.99),<0.001Number of Diagnoses (mean (sd)),,7.20 (2.01),7.51 (1.85),<0.001Healthcare Utilization (mean (sd)),,0.53 (1.40),0.83 (1.71),<0.001Max Serum Glucose (%),,,,0.033,Not Measured,61086 (95.3),5949 (94.6),,Normal,1551 (2.4),166 (2.6),,High,1492 (2.3),176 (2.8),Hemoglobin A1C (%),,,,0.044,Not Measured,52333 (81.6),5212 (82.8),,Normal,3433 (5.4),323 (5.1),,Abnormal,8363 (13.0),756 (12.0),Insulin Use (%),,,,<0.001,None,31610 (49.3),2841 (45.2),,Decreased,6595 (10.3),775 (12.3),,Unchanged,19771 (30.8),2004 (31.9),,Increased,6153 (9.6),671 (10.7),Number of Oral Anti-Glycemics (mean (sd)),,0.68 (0.82),0.68 (0.79),0.814Any Medication Change (%),,28679 (44.7),2978 (47.3),<0.001Admission Type - Elective (%),,12686 (19.8),1143 (18.2),0.002Discharge Disposition - Facility (%),,11979 (18.7),2058 (32.7),<0.001Discharge Disposition - Other (%),,3351 (5.2),359 (5.7),0.109Admission Source - Facility (%),,4446 (6.9),408 (6.5),0.19Admission Source - ED (%),,34102 (53.2),3457 (55.0),0.007Admission Source - Other (%),,4668 (7.3),453 (7.2),0.839Primary Diagnosis,,,,Diseases of the Blood (%),,590 (0.9),64 (1.0),0.485Diseases of the Circulatory System (%),,5241 (8.2),525 (8.3),0.651Diseases of the respiratory system (%),,8874 (13.8),691 (11.0),<0.001Diabetes Mellitus (%),,19420 (30.3),2077 (33.0),<0.001Diseases of the Digestive System (%),,5990 (9.3),522 (8.3),0.007"Endocrine, Nutritional, and Metabolic Diseases (%)",,1695 (2.6),167 (2.7),0.99Diseases of the genitourinary system (%),,3166 (4.9),311 (4.9),1Infectious and parasitic diseases (%),,1540 (2.4),163 (2.6),0.373Diseases of the musculoskeletal system (%),,3730 (5.8),341 (5.4),0.209Neoplasms (%),,2427 (3.8),231 (3.7),0.68Injury and poisoning (%),,4196 (6.5),506 (8.0),<0.001Mental disorders (%),,1381 (2.2),165 (2.6),0.017Diseases of the nervous system (%),,585 (0.9),59 (0.9),0.893External Cause (%),,799 (1.2),124 (2.0),<0.001Pregnancy Complications (%),,560 (0.9),26 (0.4),<0.001Diseases of the sense organs (%),,211 (0.3),8 (0.1),0.009"
+Diseases of the skin and subcutaneous tissue (%)",,1698 (2.6),146 (2.3),0.131Other (%),,1672 (2.6),138 (2.2),0.053Unknown (%),,354 (0.6),27 (0.4),0.239
