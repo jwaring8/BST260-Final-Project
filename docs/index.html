@@ -567,17 +567,23 @@
                                             </article>
                                         </div>
                                         <h4>kNN</h4>
-                                        <p> Talk about the kNN model... <br />
+                                        <p> KNN is an algorithm that takes in numerical features, then calculates the distance between a given observation and all the other observations in the dataset, then chooses the predicted label for the given point based on what label the majority of that point’s “K nearest neighbors” (K points closest to the point of interest) possess. For this reason it is important to choose a <b>K</b> in such a way as to avoid tie votes among the “K neighbors.” <br />
                                         <div class="features">
                                             <article>
                                                 <img src="images/ROC_kNN.png" width="100%" alt="" />
                                             </article>
                                         </div>
                                         <h4>GLMnet</h4>
-                                        <p> Talk about the GLMnet model... <br />
+                                        <p> <a href = "https://web.stanford.edu/~hastie/glmnet/glmnet_alpha.html#log">GLMnet</a> fits a generalized linear model via penalized maximum likelihood. The algorithm implemented in the package computes the regularization path for the elastic-net penalty over a grid of values for the regularization parameter λ. The elastic-net penalty is controlled by α, and bridges the gap between lasso (α=1, the default) and ridge (α=0). The tuning parameter λ controls the overall strength of the penalty. To reduce noise caused by data-splitting, we used 10-fold cross-validation for tuning parameter values using the caret package as described <a href = "http://www.milanor.net/blog/cross-validation-for-predictive-analytics-using-r/">here</a>. In our dataset, the best tuning parameter chosen after 10-fold cross validation is α = 0, λ = 0.01. This means that we are effectively using a lasso. <br />
                                         <div class="features">
                                             <article>
                                                 <img src="images/ROC_GLMnet" width="100%" alt="" />
+                                            </article>
+                                        </div>
+                                        <br /> Here are the most important features selected by GLMnet: </p>
+                                        <div class="features">
+                                            <article>
+                                                <img src="images/glmnet_imp.png" width="100%" alt="" />
                                             </article>
                                         </div>
 									</div>
