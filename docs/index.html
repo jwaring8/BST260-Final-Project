@@ -171,6 +171,9 @@
                                         <h4>GLMnet</h4>
                                         <p> <a href = "https://web.stanford.edu/~hastie/glmnet/glmnet_alpha.html#log">GLMnet</a> fits a generalized linear model via penalized maximum likelihood. The algorithm implemented in the package computes the regularization path for the elastic-net penalty over a grid of values for the regularization parameter λ. The elastic-net penalty is controlled by α, and bridges the gap between lasso (α=1, the default) and ridge (α=0). The tuning parameter λ controls the overall strength of the penalty. To reduce noise caused by data-splitting, we used 10-fold cross-validation for tuning parameter values using the caret package as described <a href = "http://www.milanor.net/blog/cross-validation-for-predictive-analytics-using-r/">here</a>. In our dataset, the best tuning parameter chosen after 10-fold cross validation is α = 0, λ = 0.01. This means that we are effectively using a lasso. <br />
                                         <div class="features">
+																						<article>
+																								<img src="images/Mixing_percentage.png" width="100%" alt="" />
+																						</article>
                                             <article>
                                                 <img src="images/ROC_GLMnet.png" width="100%" alt="" />
                                             </article>
@@ -187,6 +190,11 @@
 						<!-- Six -->
 							<section id="six">
 								<div class="container">
+									<div class="features">
+											<article>
+													<img src="images/Table2_2.png" width="100%" alt="" />
+											</article>
+									</div>
 									<h3>Conclusions and Limitations</h3>
 									          <h4>Conclusions</h4>
               									<ol>
