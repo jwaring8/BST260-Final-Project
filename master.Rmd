@@ -46,6 +46,7 @@ library(DMwR)
 library(Rtsne)
 library(glmnet)
 library(doParallel)
+library(gridExtra)
 theme_set(theme_bw())
 ```
 
@@ -319,7 +320,7 @@ ggplot(data = cor_mat_melted, aes(x=Var1, y=Var2, fill=value)) +
   scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
                        midpoint = 0, limit = c(-1,1), space = "Lab") +
   theme_minimal() + 
-  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 1),
+  theme(axis.text.x = element_text(angle = -45, vjust = 1, hjust = 0),
         legend.position = c(0,1), legend.justification = c(0,1),
         axis.title = element_blank(), plot.title = element_text(hjust = 0.5)) +
   labs(title = "Correlation matrix") +
@@ -382,14 +383,26 @@ var_explained <- data.frame("PC" = c(1:41), "eigenvalue" = (PC$sdev)^2)
 var_explained$var_explained <- var_explained$eigenvalue / sum(var_explained$eigenvalue)
 var_explained$cumulative <- cumsum(var_explained$var_explained) / sum(var_explained$var_explained)
 
-ggplot(var_explained, aes(x = PC, y = var_explained)) + 
-  geom_line() +
-  labs(title = "Elbow plot: proportion of variance explained by each PC")
+# ggplot(var_explained, aes(x = PC, y = var_explained)) + 
+#   geom_line() +
+#   labs(title = "Elbow plot: proportion of variance explained by each PC")
+# 
+# ggplot(var_explained, aes(x = PC, y = cumulative)) + 
+#   geom_line() +
+#   labs(title = "Cumulative variance explained by PC_1 through PC_n",
+#        x = "n", y = "var_explained")
 
-ggplot(var_explained, aes(x = PC, y = cumulative)) + 
+p1 <- ggplot(var_explained, aes(x = PC, y = var_explained)) + 
   geom_line() +
-  labs(title = "Cumulative variance explained by PC_1 through PC_n",
-       x = "n", y = "vat_explained")
+  labs(title = "Elbow plot: proportion of variance \nexplained by each PC") +
+  theme(panel.grid.minor = element_blank())
+p2 <- ggplot(var_explained, aes(x = PC, y = cumulative)) + 
+  geom_line() + 
+  labs(title = "Cumulative proportion of variance \nexplained by PC_1 through PC_n",
+       x = "PC", y = "variance explained") +
+  theme(axis.title.y = element_blank(), panel.grid.minor = element_blank())
+
+ggsave(grid.arrange(p1, p2, ncol = 2), filename = "docs/images/pcastats_grid.png", width = 9, height = 4)
 
 outdf <- cbind(data, PC$rotation)
 outdf$readmitted <- as.factor(outdf$readmitted)
@@ -527,7 +540,7 @@ ggplot(data=data, aes(x=num_medications,
 ```{r}
 ggplot(data=data, aes(x=factor(readmitted, 
                                  labels = c("No Readmission within 30 Days", "Readmission in < 30 Days")), 
-                     y=num_procedures)) + 
+                     y=num_medications)) + 
   geom_boxplot(fill="firebrick1", alpha=0.6) + 
   labs(y="# of Medications Administered", x="Readmission Status", 
        title="Distribution of # Medications Administered Grouped by Readmission Status", fill="Readmission Status")
@@ -696,7 +709,12 @@ We see from this first model that we are not performing very well. We have an ac
 
 ```{r, fig.width=15}
 importance <- xgb.importance(model = xgb)
-xgb.ggplot.importance(importance_matrix = importance, top_n = 10)
+xgb.ggplot.importance(importance_matrix = importance, top_n = 10) + 
+  theme(axis.text = element_text(size = 12), 
+        plot.title = element_text(size=14),
+        panel.grid.minor = element_blank(), 
+        panel.grid.major = element_line(size=0.25), 
+        axis.title.y = element_blank())
 ```
 
 According to the XGBoost algorithm, healthcare utilization, age, and time in hospital are the three most important factors for predicting hospital readmission. 
