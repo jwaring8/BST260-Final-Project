@@ -750,7 +750,8 @@ We see that KNN produces a testing AUC-ROC of 0.544.
 
 ### GLMnet
 
-GLMnet fits a generalized linear model via penalized maximum likelihood. The algorithm implemented in the package computes the regularization path for the elastic-net penalty over a grid of values for the regularization parameter $\lambda$ (https://web.stanford.edu/~hastie/glmnet/glmnet_alpha.html#log). To reduce noise caused by data-splitting, we used 10-fold cross-validation for tuning parameter values using the caret package as described here (http://www.milanor.net/blog/cross-validation-for-predictive-analytics-using-r/).
+GLMnet fits a generalized linear model via penalized maximum likelihood. The algorithm implemented in the package computes the regularization path for the elastic-net penalty over a grid of values for the regularization parameter $\lambda$ (https://web.stanford.edu/~hastie/glmnet/glmnet_alpha.html#log). The elastic-net penalty is controlled by α
+, and bridges the gap between lasso (α=1, the default) and ridge (α=0). The tuning parameter λ controls the overall strength of the penalty. To reduce noise caused by data-splitting, we used 10-fold cross-validation for tuning parameter values using the caret package as described here (http://www.milanor.net/blog/cross-validation-for-predictive-analytics-using-r/).
 
 #### Hyperparameter Optimization and Trainging of GLMnet
 
@@ -775,6 +776,8 @@ stopCluster(cl)
 # Best tuning parameters
 glmnet_fit$bestTune
 ```
+
+The best tuning parameter chosen after 10-fold cross validation is $\alpha = 0, \lambda = 0.01$. This means that we are effectively using a lasso. 
 
 ```{r}
 trellis.par.set(caretTheme())
