@@ -94,7 +94,7 @@ Next, we need to drop any patients who's discharge status is listed as "expired"
 data <- filter(data, !(discharge_disposition_id %in% c(11, 19, 20, 21)))
 ```
 
-We will also remove the 3 subjects with an unknon gender. 
+We will also remove the 3 subjects with an unknown gender. 
 ```{r}
 data <- data %>% filter(gender != "Unknown/Invalid")
 data$gender <- droplevels(data$gender)
@@ -856,7 +856,7 @@ plot(varImp(glmnet_fit,scale=F), top = 10)
 coef(glmnet_fit$finalModel, s = glmnet_fit$bestTune$lambda) 
 ```
 
-The most important features for predicting hospital readmission according to GLMnet are wheteher of not a patient was transfered to another facility at dischagre, the number of inpatient visits in the past year for a patient, and their A1C test result. 
+The most important features for predicting hospital readmission according to GLMnet are whether of not a patient was transfered to another facility at dischagre, the number of inpatient visits in the past year for a patient, and their A1C test result. 
 
 #### Simple ROC Curve
 
