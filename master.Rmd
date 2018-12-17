@@ -1,5 +1,6 @@
 ---
 title: "Predicting Hospital Readmission"
+author: "Selena Huang, Erica Moreira, Jacob Rosenthal, and Jonathan Waring"
 date: "December 16, 2018"
 output: html_document
 ---
